@@ -10,20 +10,38 @@ import (
 	"time"
 
 	"github.com/maypok86/payment-api/internal/config"
+	"github.com/maypok86/payment-api/internal/pkg/postgres"
 	"github.com/maypok86/payment-api/internal/pkg/server"
 	"go.uber.org/zap"
 )
 
 type App struct {
 	logger     *zap.Logger
+	db         *postgres.Client
 	httpServer *server.Server
 }
 
 func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 	cfg := config.Get()
 
+	db, err := postgres.NewClient(
+		ctx,
+		postgres.NewConnectionConfig(
+			cfg.Postgres.Host,
+			cfg.Postgres.Port,
+			cfg.Postgres.DBName,
+			cfg.Postgres.User,
+			cfg.Postgres.Password,
+			cfg.Postgres.SSLMode,
+		),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("connect to postgres: %w", err)
+	}
+
 	return &App{
 		logger: logger,
+		db:     db,
 		httpServer: server.New(
 			http.NewServeMux(),
 			server.WithHost(cfg.HTTP.Host),
@@ -36,6 +54,8 @@ func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 }
 
 func (a *App) Run(ctx context.Context) error {
+	defer a.db.Close()
+
 	eChan := make(chan error)
 	interrupt := make(chan os.Signal, 1)
 

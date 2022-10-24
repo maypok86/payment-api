@@ -32,11 +32,11 @@ func run(ctx context.Context) error {
 
 	app, err := api.New(ctx, l)
 	if err != nil {
-		return fmt.Errorf("failed to create app: %w", err)
+		return fmt.Errorf("create app: %w", err)
 	}
 
 	if err := app.Run(ctx); err != nil {
-		return fmt.Errorf("failed to run app: %w", err)
+		return fmt.Errorf("run app: %w", err)
 	}
 
 	return nil
