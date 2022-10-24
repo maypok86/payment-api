@@ -34,6 +34,7 @@ func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 			cfg.Postgres.Password,
 			cfg.Postgres.SSLMode,
 		),
+		postgres.WithMaxPoolSize(cfg.Postgres.MaxPoolSize),
 	)
 	if err != nil {
 		return nil, fmt.Errorf("connect to postgres: %w", err)

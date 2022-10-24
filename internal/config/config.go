@@ -35,12 +35,13 @@ type (
 	}
 
 	Postgres struct {
-		Host     string `envconfig:"POSTGRES_HOST"     required:"true"`
-		Port     string `envconfig:"POSTGRES_PORT"     required:"true"`
-		DBName   string `envconfig:"POSTGRES_DBNAME"   required:"true"`
-		User     string `envconfig:"POSTGRES_USER"     required:"true"`
-		Password string `envconfig:"POSTGRES_PASSWORD" required:"true" json:"-"`
-		SSLMode  string `envconfig:"POSTGRES_SSLMODE"                           default:"disable"`
+		Host        string `envconfig:"POSTGRES_HOST"          required:"true"`
+		Port        string `envconfig:"POSTGRES_PORT"          required:"true"`
+		DBName      string `envconfig:"POSTGRES_DBNAME"        required:"true"`
+		User        string `envconfig:"POSTGRES_USER"          required:"true"`
+		Password    string `envconfig:"POSTGRES_PASSWORD"      required:"true" json:"-"`
+		SSLMode     string `envconfig:"POSTGRES_SSLMODE"                                default:"disable"`
+		MaxPoolSize int    `envconfig:"POSTGRES_MAX_POOL_SIZE"                          default:"4"`
 	}
 
 	Logger struct {

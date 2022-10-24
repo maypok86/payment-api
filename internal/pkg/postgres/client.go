@@ -44,6 +44,8 @@ func NewClient(ctx context.Context, config ConnectionConfig, opts ...Option) (*C
 		return nil, fmt.Errorf("parse postgres config: %w", err)
 	}
 
+	poolCfg.MaxConns = int32(instance.maxPoolSize)
+
 	for instance.connAttempts > 0 {
 		instance.Pool, err = pgxpool.ConnectConfig(ctx, poolCfg)
 		if err == nil {
