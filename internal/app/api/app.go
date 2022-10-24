@@ -3,13 +3,13 @@ package api
 import (
 	"context"
 	"fmt"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
 	"github.com/maypok86/payment-api/internal/config"
+	httphandler "github.com/maypok86/payment-api/internal/handler/http"
 	"github.com/maypok86/payment-api/internal/pkg/postgres"
 	"github.com/maypok86/payment-api/internal/pkg/server"
 	"go.uber.org/zap"
@@ -40,11 +40,13 @@ func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 		return nil, fmt.Errorf("connect to postgres: %w", err)
 	}
 
+	router := httphandler.NewRouter(logger)
+
 	return &App{
 		logger: logger,
 		db:     db,
 		httpServer: server.New(
-			http.NewServeMux(),
+			router,
 			server.WithHost(cfg.HTTP.Host),
 			server.WithPort(cfg.HTTP.Port),
 			server.WithMaxHeaderBytes(cfg.HTTP.MaxHeaderBytes),
