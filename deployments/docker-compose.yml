@@ -1,0 +1,57 @@
+version: '3.8'
+
+services:
+  backend:
+    container_name: compose-api_backend
+    build:
+      context: ..
+      dockerfile: build/backend/Dockerfile
+      args:
+        LDFLAGS: ${LDFLAGS}
+    env_file:
+      - ../.env
+    restart: unless-stopped
+    ports:
+      - ${HTTP_PORT}:${HTTP_PORT}
+    depends_on:
+      - migrator
+
+  migrator:
+    container_name: payment-api_migrator
+    build:
+      context: ..
+      dockerfile: build/migrator/Dockerfile
+      args:
+        GOOSE_VERSION: ${GOOSE_VERSION:-3.6.0}
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DBNAME
+      - POSTGRES_SSLMODE
+    restart: on-failure
+    volumes:
+      - ../migrations:/migrations
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  postgres:
+    image: postgres:13.0-alpine
+    container_name: payment-api_postgres
+    environment:
+      - POSTGRES_DB=${POSTGRES_DBNAME}
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+    restart: always
+    ports:
+      - ${POSTGRES_PORT}:${POSTGRES_PORT}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DBNAME}
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  db_data:
