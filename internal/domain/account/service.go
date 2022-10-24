@@ -11,6 +11,7 @@ import (
 type Repository interface {
 	CreateAccount(ctx context.Context, id int64) (*Account, error)
 	GetAccountByID(ctx context.Context, id int64) (*Account, error)
+	AddBalance(ctx context.Context, dto AddBalanceDTO) (int64, error)
 }
 
 type Service struct {
@@ -34,24 +35,26 @@ func (s *Service) GetBalanceByID(ctx context.Context, id int64) (int64, error) {
 	return account.Balance, nil
 }
 
-func (s *Service) AddBalance(ctx context.Context, dto UpdateBalanceDTO) (Account, error) {
+func (s *Service) AddBalance(ctx context.Context, dto AddBalanceDTO) (int64, error) {
 	account, err := s.repository.GetAccountByID(ctx, dto.ID)
 	if err != nil {
 		if !errors.Is(err, ErrNotFound) {
-			return Account{}, fmt.Errorf("add balance: %w", err)
+			return 0, fmt.Errorf("add balance: %w", err)
 		}
 	}
 
 	if account == nil {
 		// What if something goes wrong?
-		account, err = s.repository.CreateAccount(ctx, dto.ID)
+		_, err = s.repository.CreateAccount(ctx, dto.ID)
 		if err != nil {
-			return Account{}, fmt.Errorf("add balance: %w", err)
+			return 0, fmt.Errorf("add balance: %w", err)
 		}
 	}
 
-	return Account{
-		ID:      dto.ID,
-		Balance: account.Balance + dto.Balance,
-	}, nil
+	balance, err := s.repository.AddBalance(ctx, dto)
+	if err != nil {
+		return 0, fmt.Errorf("add balance: %w", err)
+	}
+
+	return balance, nil
 }

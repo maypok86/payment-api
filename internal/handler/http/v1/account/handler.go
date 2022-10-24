@@ -12,7 +12,7 @@ import (
 
 type Service interface {
 	GetBalanceByID(ctx context.Context, id int64) (int64, error)
-	AddBalance(ctx context.Context, dto account.UpdateBalanceDTO) (account.Account, error)
+	AddBalance(ctx context.Context, dto account.AddBalanceDTO) (int64, error)
 }
 
 type Handler struct {
@@ -67,7 +67,7 @@ func (h *Handler) addBalance(c *gin.Context) {
 		return
 	}
 
-	entity, err := h.service.AddBalance(c, account.UpdateBalanceDTO{
+	balance, err := h.service.AddBalance(c, account.AddBalanceDTO{
 		ID:      request.ID,
 		Balance: request.Balance,
 	})
@@ -77,7 +77,6 @@ func (h *Handler) addBalance(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"account_id": entity.ID,
-		"balance":    entity.Balance,
+		"balance": balance,
 	})
 }

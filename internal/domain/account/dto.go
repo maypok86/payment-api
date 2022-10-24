@@ -1,6 +1,6 @@
 package account
 
-type UpdateBalanceDTO struct {
+type AddBalanceDTO struct {
 	ID      int64
 	Balance int64
 }
