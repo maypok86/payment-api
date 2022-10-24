@@ -2,16 +2,20 @@ package v1
 
 import (
 	"github.com/gin-gonic/gin"
+	"github.com/maypok86/payment-api/internal/domain"
+	"github.com/maypok86/payment-api/internal/handler/http/v1/account"
 	"go.uber.org/zap"
 )
 
 type Handler struct {
-	logger *zap.Logger
+	services *domain.Services
+	logger   *zap.Logger
 }
 
-func NewHandler(logger *zap.Logger) *Handler {
+func NewHandler(services *domain.Services, logger *zap.Logger) *Handler {
 	return &Handler{
-		logger: logger,
+		services: services,
+		logger:   logger,
 	}
 }
 
@@ -23,5 +27,7 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 				"message": "pong",
 			})
 		})
+
+		account.NewHandler(h.services.Account, h.logger).InitAPI(v1)
 	}
 }

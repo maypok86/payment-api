@@ -3,11 +3,12 @@ package http
 import (
 	"github.com/gin-gonic/gin"
 	"github.com/maypok86/payment-api/internal/config"
+	"github.com/maypok86/payment-api/internal/domain"
 	v1 "github.com/maypok86/payment-api/internal/handler/http/v1"
 	"go.uber.org/zap"
 )
 
-func NewRouter(logger *zap.Logger) *gin.Engine {
+func NewRouter(services *domain.Services, logger *zap.Logger) *gin.Engine {
 	router := gin.New()
 
 	router.Use(gin.Logger(), gin.Recovery())
@@ -20,8 +21,7 @@ func NewRouter(logger *zap.Logger) *gin.Engine {
 
 	api := router.Group("/api")
 	{
-		v1Handler := v1.NewHandler(logger)
-		v1Handler.InitAPI(api)
+		v1.NewHandler(services, logger).InitAPI(api)
 	}
 
 	return router

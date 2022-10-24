@@ -9,9 +9,11 @@ import (
 	"time"
 
 	"github.com/maypok86/payment-api/internal/config"
+	"github.com/maypok86/payment-api/internal/domain"
 	httphandler "github.com/maypok86/payment-api/internal/handler/http"
 	"github.com/maypok86/payment-api/internal/pkg/postgres"
 	"github.com/maypok86/payment-api/internal/pkg/server"
+	"github.com/maypok86/payment-api/internal/repository/psql"
 	"go.uber.org/zap"
 )
 
@@ -40,7 +42,10 @@ func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 		return nil, fmt.Errorf("connect to postgres: %w", err)
 	}
 
-	router := httphandler.NewRouter(logger)
+	repositories := psql.NewRepositories(db, logger)
+	services := domain.NewServices(repositories, logger)
+
+	router := httphandler.NewRouter(services, logger)
 
 	return &App{
 		logger: logger,

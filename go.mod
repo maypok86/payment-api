@@ -5,6 +5,8 @@ go 1.18
 require (
 	github.com/Masterminds/squirrel v1.5.3
 	github.com/gin-gonic/gin v1.8.1
+	github.com/jackc/pgconn v1.13.0
+	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v4 v4.17.2
 	github.com/kelseyhightower/envconfig v1.4.0
 	github.com/stretchr/testify v1.8.0
@@ -19,7 +21,6 @@ require (
 	github.com/go-playground/validator/v10 v10.11.1 // indirect
 	github.com/goccy/go-json v0.9.11 // indirect
 	github.com/jackc/chunkreader/v2 v2.0.1 // indirect
-	github.com/jackc/pgconn v1.13.0 // indirect
 	github.com/jackc/pgio v1.0.0 // indirect
 	github.com/jackc/pgpassfile v1.0.0 // indirect
 	github.com/jackc/pgproto3/v2 v2.3.1 // indirect
