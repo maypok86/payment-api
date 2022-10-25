@@ -6,11 +6,13 @@ import (
 )
 
 type Repositories struct {
-	Account *AccountRepository
+	Account     *AccountRepository
+	Transaction *TransactionRepository
 }
 
 func NewRepositories(db *postgres.Client, logger *zap.Logger) *Repositories {
 	return &Repositories{
-		Account: NewAccountRepository(db, logger),
+		Account:     NewAccountRepository(db, logger),
+		Transaction: NewTransactionRepository(db, logger),
 	}
 }

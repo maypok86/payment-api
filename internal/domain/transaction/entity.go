@@ -4,6 +4,9 @@ import (
 	"database/sql/driver"
 	"errors"
 	"time"
+
+	"github.com/maypok86/payment-api/internal/pkg/pagination"
+	"github.com/maypok86/payment-api/internal/pkg/sort"
 )
 
 var (
@@ -18,16 +21,25 @@ type Type struct {
 
 var Enrollment = Type{"enrollment"}
 
+var transactionTypeToString = map[Type]string{
+	Enrollment: "enrollment",
+}
+
+var stringToTransactionType = map[string]Type{
+	"enrollment": Enrollment,
+}
+
+func (t Type) String() string {
+	return t.string
+}
+
 func (t *Type) Scan(value interface{}) error {
-	asBytes, ok := value.([]byte)
+	s, ok := value.(string)
 	if !ok {
-		return errors.New("scan source is not []byte")
+		return errors.New("scan source is not string")
 	}
 
-	values := map[string]Type{
-		"enrollment": Enrollment,
-	}
-	if v, ok := values[string(asBytes)]; ok {
+	if v, ok := stringToTransactionType[s]; ok {
 		*t = v
 		return nil
 	}
@@ -36,11 +48,7 @@ func (t *Type) Scan(value interface{}) error {
 }
 
 func (t Type) Value() (driver.Value, error) {
-	values := map[Type]string{
-		Enrollment: "enrollment",
-	}
-
-	s, ok := values[t]
+	s, ok := transactionTypeToString[t]
 	if !ok {
 		return nil, errors.New("wrong value for Type")
 	}
@@ -56,4 +64,47 @@ type Transaction struct {
 	Amount      int64
 	Description string
 	CreatedAt   time.Time
+}
+
+var (
+	ErrInvalidSortParam      = errors.New("invalid sort param")
+	ErrInvalidDirectionParam = errors.New("invalid direction param")
+)
+
+type ListParams struct {
+	Pagination pagination.Params
+	Sort       *sort.Sort
+}
+
+func NewListParams(sortParam, directionParam string, params pagination.Params) (ListParams, error) {
+	if params.Limit == 0 || params.Limit > pagination.MaxLimit {
+		params.Limit = pagination.DefaultLimit
+	}
+	if sortParam == "" {
+		return ListParams{Pagination: params}, nil
+	}
+
+	sortMap := map[string]string{
+		"date": "created_at",
+		"sum":  "amount",
+	}
+
+	column, ok := sortMap[sortParam]
+	if !ok {
+		return ListParams{}, ErrInvalidSortParam
+	}
+
+	directionSet := map[string]struct{}{
+		"asc":  {},
+		"desc": {},
+	}
+
+	if _, ok := directionSet[directionParam]; !ok && directionParam != "" {
+		return ListParams{}, ErrInvalidDirectionParam
+	}
+
+	return ListParams{
+		Pagination: params,
+		Sort:       sort.New(column, directionParam),
+	}, nil
 }
