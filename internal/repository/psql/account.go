@@ -29,33 +29,6 @@ func NewAccountRepository(db *postgres.Client, logger *zap.Logger) *AccountRepos
 	}
 }
 
-func (ar *AccountRepository) CreateAccount(ctx context.Context, id int64) (*account.Account, error) {
-	sql, args, err := ar.db.Builder.Insert(ar.tableName).
-		Columns("id").
-		Values(id).
-		Suffix("RETURNING id, balance").
-		ToSql()
-	if err != nil {
-		return nil, fmt.Errorf("build create account query: %w", err)
-	}
-
-	ar.logger.Debug("create account query", zap.String("sql", sql), zap.Any("args", args))
-
-	entity := &account.Account{}
-	if err = ar.db.Pool.QueryRow(ctx, sql, args...).Scan(&entity.ID, &entity.Balance); err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) {
-			if pgErr.Code == pgerrcode.UniqueViolation {
-				return nil, fmt.Errorf("insert account: %w", account.ErrAlreadyExist)
-			}
-		}
-
-		return nil, fmt.Errorf("insert account: %w", err)
-	}
-
-	return entity, nil
-}
-
 func (ar *AccountRepository) GetAccountByID(ctx context.Context, id int64) (*account.Account, error) {
 	sql, args, err := ar.db.Builder.Select("id", "balance").
 		From(ar.tableName).
@@ -80,43 +53,149 @@ func (ar *AccountRepository) GetAccountByID(ctx context.Context, id int64) (*acc
 	return entity, nil
 }
 
-func (ar *AccountRepository) AddBalance(ctx context.Context, dto account.AddBalanceDTO) (int64, error) {
+type updateBalanceDTO struct {
+	accountID int64
+	amount    int64
+}
+
+func (ar *AccountRepository) updateBalance(
+	ctx context.Context,
+	tx pgx.Tx,
+	updateType string,
+	dto updateBalanceDTO,
+) (int64, error) {
 	var accountBalance int64
-	err := ar.db.Pool.BeginFunc(ctx, func(tx pgx.Tx) error {
-		sql, args, err := ar.db.Builder.Update(ar.tableName).
-			Set("balance", sq.Expr("balance + ?", dto.Balance)).
-			Where(sq.Eq{"id": dto.ID}).
-			Suffix("RETURNING balance").
-			ToSql()
-		if err != nil {
-			return fmt.Errorf("build add balance query: %w", err)
+	sql, args, err := ar.db.Builder.Update(ar.tableName).
+		Set("balance", sq.Expr("balance + ?", dto.amount)).
+		Where(sq.Eq{"id": dto.accountID}).
+		Suffix("RETURNING balance").
+		ToSql()
+	if err != nil {
+		return 0, fmt.Errorf("build %s balance query: %w", updateType, err)
+	}
+
+	ar.logger.Debug(fmt.Sprintf("%s balance query", updateType), zap.String("sql", sql), zap.Any("args", args))
+
+	if err := tx.QueryRow(ctx, sql, args...).Scan(&accountBalance); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return 0, account.ErrNotFound
 		}
 
-		ar.logger.Debug("add balance query", zap.String("sql", sql), zap.Any("args", args))
+		return 0, err
+	}
 
-		if err := tx.QueryRow(ctx, sql, args...).Scan(&accountBalance); err != nil {
-			if errors.Is(err, pgx.ErrNoRows) {
-				return account.ErrNotFound
+	return accountBalance, nil
+}
+
+func (ar *AccountRepository) createAccount(ctx context.Context, tx pgx.Tx, id int64) (account.Account, error) {
+	sql, args, err := ar.db.Builder.Insert(ar.tableName).
+		Columns("id").
+		Values(id).
+		Suffix("RETURNING id, balance").
+		ToSql()
+	if err != nil {
+		return account.Account{}, fmt.Errorf("build create account query: %w", err)
+	}
+
+	ar.logger.Debug("create account query", zap.String("sql", sql), zap.Any("args", args))
+
+	var entity account.Account
+	if err := tx.QueryRow(ctx, sql, args...).Scan(&entity.ID, &entity.Balance); err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) {
+			if pgErr.Code == pgerrcode.UniqueViolation {
+				return account.Account{}, fmt.Errorf("insert account: %w", account.ErrAlreadyExist)
+			}
+		}
+
+		return account.Account{}, fmt.Errorf("insert account: %w", err)
+	}
+
+	return entity, nil
+}
+
+func (ar *AccountRepository) AddBalance(
+	ctx context.Context,
+	dto account.AddBalanceDTO,
+) (accountBalance int64, err error) {
+	err = ar.db.Pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+		accountBalance, err = ar.updateBalance(ctx, tx, "add", updateBalanceDTO{
+			accountID: dto.ID,
+			amount:    dto.Balance,
+		})
+		if err == nil {
+			transactionDTO := transaction.CreateDTO{
+				Type:        transaction.Enrollment,
+				SenderID:    dto.ID,
+				ReceiverID:  dto.ID,
+				Amount:      dto.Balance,
+				Description: fmt.Sprintf("Add %d kopecks to account with id = %d", dto.Balance, dto.ID),
 			}
 
-			return err
+			return ar.createTransaction(ctx, tx, transactionDTO)
 		}
 
-		transactionDTO := transaction.CreateDTO{
-			Type:        transaction.Enrollment,
-			SenderID:    dto.ID,
-			ReceiverID:  dto.ID,
-			Amount:      dto.Balance,
-			Description: fmt.Sprintf("Add %d kopecks to account with id = %d", dto.Balance, dto.ID),
+		if errors.Is(err, account.ErrNotFound) {
+			if _, err := ar.createAccount(ctx, tx, dto.ID); err != nil {
+				return err
+			}
+
+			accountBalance, err = ar.updateBalance(ctx, tx, "add", updateBalanceDTO{
+				accountID: dto.ID,
+				amount:    dto.Balance,
+			})
 		}
 
-		return ar.createTransaction(ctx, tx, transactionDTO)
+		return err
 	})
 	if err != nil {
 		return accountBalance, fmt.Errorf("add balance: %w", err)
 	}
 
 	return accountBalance, nil
+}
+
+func (ar *AccountRepository) TransferBalance(
+	ctx context.Context,
+	dto account.TransferBalanceDTO,
+) (senderBalance int64, receiverBalance int64, err error) {
+	err = ar.db.Pool.BeginFunc(ctx, func(tx pgx.Tx) error {
+		senderBalance, err = ar.updateBalance(ctx, tx, "send", updateBalanceDTO{
+			accountID: dto.SenderID,
+			amount:    -dto.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		receiverBalance, err = ar.updateBalance(ctx, tx, "receive", updateBalanceDTO{
+			accountID: dto.ReceiverID,
+			amount:    dto.Amount,
+		})
+		if err != nil {
+			return err
+		}
+
+		transactionDTO := transaction.CreateDTO{
+			Type:       transaction.Transfer,
+			SenderID:   dto.SenderID,
+			ReceiverID: dto.ReceiverID,
+			Amount:     dto.Amount,
+			Description: fmt.Sprintf(
+				"Transfer %d kopecks from account with id = %d to account with id = %d",
+				dto.Amount,
+				dto.SenderID,
+				dto.ReceiverID,
+			),
+		}
+
+		return ar.createTransaction(ctx, tx, transactionDTO)
+	})
+	if err != nil {
+		return 0, 0, fmt.Errorf("transfer balance: %w", err)
+	}
+
+	return senderBalance, receiverBalance, nil
 }
 
 func (ar *AccountRepository) createTransaction(ctx context.Context, tx pgx.Tx, dto transaction.CreateDTO) error {

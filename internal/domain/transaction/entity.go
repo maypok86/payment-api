@@ -19,14 +19,19 @@ type Type struct {
 	string
 }
 
-var Enrollment = Type{"enrollment"}
+var (
+	Enrollment = Type{"enrollment"}
+	Transfer   = Type{"transfer"}
+)
 
 var transactionTypeToString = map[Type]string{
 	Enrollment: "enrollment",
+	Transfer:   "transfer",
 }
 
 var stringToTransactionType = map[string]Type{
 	"enrollment": Enrollment,
+	"transfer":   Transfer,
 }
 
 func (t Type) String() string {

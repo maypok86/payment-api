@@ -13,6 +13,7 @@ import (
 type Service interface {
 	GetBalanceByID(ctx context.Context, id int64) (int64, error)
 	AddBalance(ctx context.Context, dto account.AddBalanceDTO) (int64, error)
+	TransferBalance(ctx context.Context, dto account.TransferBalanceDTO) (int64, int64, error)
 }
 
 type Handler struct {
@@ -34,6 +35,7 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 	{
 		balanceGroup.GET("/:account_id", h.getBalance)
 		balanceGroup.POST("/", h.addBalance)
+		balanceGroup.POST("/transfer", h.transferBalance)
 	}
 }
 
@@ -78,5 +80,39 @@ func (h *Handler) addBalance(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{
 		"balance": balance,
+	})
+}
+
+type transferBalanceRequest struct {
+	SenderID   int64 `json:"sender_id"   binding:"required"`
+	ReceiverID int64 `json:"receiver_id" binding:"required"`
+	Amount     int64 `json:"amount"      binding:"required,gt=0"`
+}
+
+type transferBalanceResponse struct {
+	SenderBalance   int64 `json:"sender_balance"`
+	ReceiverBalance int64 `json:"receiver_balance"`
+}
+
+func (h *Handler) transferBalance(c *gin.Context) {
+	var request transferBalanceRequest
+	if err := c.ShouldBindJSON(&request); err != nil {
+		h.ErrorResponse(c, http.StatusBadRequest, err, "Balance not transferred. request is not valid")
+		return
+	}
+
+	senderBalance, receiverBalance, err := h.service.TransferBalance(c, account.TransferBalanceDTO{
+		SenderID:   request.SenderID,
+		ReceiverID: request.ReceiverID,
+		Amount:     request.Amount,
+	})
+	if err != nil {
+		h.ErrorResponse(c, http.StatusInternalServerError, err, "Transfer balance error")
+		return
+	}
+
+	c.JSON(http.StatusOK, transferBalanceResponse{
+		SenderBalance:   senderBalance,
+		ReceiverBalance: receiverBalance,
 	})
 }
