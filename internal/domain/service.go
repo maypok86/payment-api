@@ -14,7 +14,7 @@ type Services struct {
 
 func NewServices(repositories *psql.Repositories, logger *zap.Logger) *Services {
 	return &Services{
-		Account:     account.NewService(repositories.Account, logger),
+		Account:     account.NewService(repositories.Account, repositories.Transaction, logger),
 		Transaction: transaction.NewService(repositories.Transaction, logger),
 	}
 }
