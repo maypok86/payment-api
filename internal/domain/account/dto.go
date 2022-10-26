@@ -15,3 +15,8 @@ type ReserveBalanceDTO struct {
 	AccountID int64
 	Amount    int64
 }
+
+type ReturnBalanceDTO struct {
+	AccountID int64
+	Amount    int64
+}

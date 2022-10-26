@@ -177,3 +177,15 @@ func (ar *AccountRepository) ReserveBalance(ctx context.Context, dto account.Res
 
 	return balance, nil
 }
+
+func (ar *AccountRepository) ReturnBalance(ctx context.Context, dto account.ReturnBalanceDTO) (int64, error) {
+	balance, err := ar.updateBalance(ctx, "return", updateBalanceDTO{
+		accountID: dto.AccountID,
+		amount:    dto.Amount,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("return balance: %w", err)
+	}
+
+	return balance, nil
+}

@@ -2,10 +2,12 @@ package order
 
 import (
 	"context"
+	"errors"
 	"net/http"
 	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/maypok86/payment-api/internal/domain/account"
 	"github.com/maypok86/payment-api/internal/domain/order"
 	"github.com/maypok86/payment-api/internal/pkg/handler"
 	"go.uber.org/zap"
@@ -77,6 +79,15 @@ func (h *Handler) createOrder(c *gin.Context) {
 		Amount:    request.Amount,
 	})
 	if err != nil {
+		switch {
+		case errors.Is(err, account.ErrNotFound):
+			h.ErrorResponse(c, http.StatusBadRequest, err, "Create order error. Account not found")
+			return
+		case errors.Is(err, order.ErrAlreadyExist):
+			h.ErrorResponse(c, http.StatusConflict, err, "Create order error. Order already exist")
+			return
+		}
+
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Create order error")
 		return
 	}
@@ -104,6 +115,11 @@ func (h *Handler) payForOrder(c *gin.Context) {
 	}
 
 	if err := h.service.PayForOrder(c, orderID); err != nil {
+		if errors.Is(err, order.ErrNotFound) {
+			h.ErrorResponse(c, http.StatusBadRequest, err, "Pay for order error. Order not found")
+			return
+		}
+
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Pay for order error")
 		return
 	}
@@ -120,6 +136,15 @@ func (h *Handler) cancelOrder(c *gin.Context) {
 
 	balance, err := h.service.CancelOrder(c, orderID)
 	if err != nil {
+		switch {
+		case errors.Is(err, order.ErrNotFound):
+			h.ErrorResponse(c, http.StatusBadRequest, err, "Cancel order error. Order not found")
+			return
+		case errors.Is(err, account.ErrNotFound):
+			h.ErrorResponse(c, http.StatusBadRequest, err, "Cancel order error. Account not found")
+			return
+		}
+
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Cancel order error")
 		return
 	}

@@ -2,6 +2,7 @@ package account
 
 import (
 	"context"
+	"errors"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -42,12 +43,17 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 func (h *Handler) getBalance(c *gin.Context) {
 	accountID, err := h.ParseIDFromPath(c, "account_id")
 	if err != nil {
-		h.ErrorResponse(c, http.StatusBadRequest, err, "Amount not found. id is not valid")
+		h.ErrorResponse(c, http.StatusBadRequest, err, "Balance not found. id is not valid")
 		return
 	}
 
 	balance, err := h.service.GetBalanceByID(c, accountID)
 	if err != nil {
+		if errors.Is(err, account.ErrNotFound) {
+			h.ErrorResponse(c, http.StatusNotFound, err, "Account not found")
+			return
+		}
+
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Get balance by id error")
 		return
 	}
@@ -107,6 +113,11 @@ func (h *Handler) transferBalance(c *gin.Context) {
 		Amount:     request.Amount,
 	})
 	if err != nil {
+		if errors.Is(err, account.ErrNotFound) {
+			h.ErrorResponse(c, http.StatusNotFound, err, "Sender or receiver not found")
+			return
+		}
+
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Transfer balance error")
 		return
 	}

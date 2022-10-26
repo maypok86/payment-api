@@ -21,8 +21,8 @@ type TransactionRepository interface {
 }
 
 type AccountRepository interface {
-	AddBalance(ctx context.Context, dto account.AddBalanceDTO) (int64, error)
 	ReserveBalance(ctx context.Context, dto account.ReserveBalanceDTO) (int64, error)
+	ReturnBalance(ctx context.Context, dto account.ReturnBalanceDTO) (int64, error)
 }
 
 type Service struct {
@@ -93,7 +93,7 @@ func (s *Service) CancelOrder(ctx context.Context, orderID int64) (balance int64
 			return err
 		}
 
-		balance, err = s.accountRepository.AddBalance(ctx, account.AddBalanceDTO{
+		balance, err = s.accountRepository.ReturnBalance(ctx, account.ReturnBalanceDTO{
 			AccountID: accountID,
 			Amount:    amount,
 		})
