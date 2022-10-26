@@ -8,6 +8,6 @@ var (
 )
 
 type Account struct {
-	ID      int64
-	Balance int64
+	AccountID int64
+	Balance   int64
 }

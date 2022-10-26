@@ -8,6 +8,15 @@ SET client_min_messages = WARNING;
 SET search_path = public, extensions;
 SET default_tablespace = '';
 SET default_with_oids = FALSE;
+
+CREATE OR REPLACE FUNCTION trigger_set_timestamp()
+RETURNS TRIGGER AS
+$$
+BEGIN
+    NEW.updated_at = now();
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
 -- +goose StatementEnd
 
 -- +goose Down

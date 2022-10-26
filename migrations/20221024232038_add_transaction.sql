@@ -1,12 +1,12 @@
 -- +goose Up
 -- +goose StatementBegin
-CREATE TYPE transaction_type AS ENUM ('enrollment', 'transfer', 'reservation', 'write-off');
+CREATE TYPE transaction_type AS ENUM ('enrollment', 'transfer', 'reservation', 'cancel_reservation');
 
 CREATE TABLE IF NOT EXISTS transactions (
-    id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    transaction_id bigint PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
     type transaction_type NOT NULL,
-    sender_id bigint NOT NULL REFERENCES accounts(id),
-    receiver_id bigint NOT NULL REFERENCES accounts(id),
+    sender_id bigint NOT NULL REFERENCES accounts(account_id),
+    receiver_id bigint NOT NULL REFERENCES accounts(account_id),
     amount bigint NOT NULL,
     description text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()

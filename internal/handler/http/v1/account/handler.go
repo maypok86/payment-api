@@ -42,7 +42,7 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 func (h *Handler) getBalance(c *gin.Context) {
 	accountID, err := h.ParseIDFromPath(c, "account_id")
 	if err != nil {
-		h.ErrorResponse(c, http.StatusBadRequest, err, "Balance not found. id is not valid")
+		h.ErrorResponse(c, http.StatusBadRequest, err, "Amount not found. id is not valid")
 		return
 	}
 
@@ -58,20 +58,20 @@ func (h *Handler) getBalance(c *gin.Context) {
 }
 
 type addBalanceRequest struct {
-	ID      int64 `json:"id"      binding:"required"`
-	Balance int64 `json:"balance" binding:"gte=0"`
+	AccountID int64 `json:"account_id" binding:"required"`
+	Balance   int64 `json:"balance"    binding:"gte=0"`
 }
 
 func (h *Handler) addBalance(c *gin.Context) {
 	var request addBalanceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		h.ErrorResponse(c, http.StatusBadRequest, err, "Balance not added. request is not valid")
+		h.ErrorResponse(c, http.StatusBadRequest, err, "Amount not added. request is not valid")
 		return
 	}
 
 	balance, err := h.service.AddBalance(c, account.AddBalanceDTO{
-		ID:      request.ID,
-		Balance: request.Balance,
+		AccountID: request.AccountID,
+		Amount:    request.Balance,
 	})
 	if err != nil {
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Add balance error")
@@ -97,7 +97,7 @@ type transferBalanceResponse struct {
 func (h *Handler) transferBalance(c *gin.Context) {
 	var request transferBalanceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
-		h.ErrorResponse(c, http.StatusBadRequest, err, "Balance not transferred. request is not valid")
+		h.ErrorResponse(c, http.StatusBadRequest, err, "Amount not transferred. request is not valid")
 		return
 	}
 

@@ -1,12 +1,17 @@
 package account
 
 type AddBalanceDTO struct {
-	ID      int64
-	Balance int64
+	AccountID int64
+	Amount    int64
 }
 
 type TransferBalanceDTO struct {
 	SenderID   int64
 	ReceiverID int64
 	Amount     int64
+}
+
+type ReserveBalanceDTO struct {
+	AccountID int64
+	Amount    int64
 }

@@ -8,11 +8,13 @@ import (
 type Repositories struct {
 	Account     *AccountRepository
 	Transaction *TransactionRepository
+	Order       *OrderRepository
 }
 
 func NewRepositories(db *postgres.Client, logger *zap.Logger) *Repositories {
 	return &Repositories{
 		Account:     NewAccountRepository(db, logger),
 		Transaction: NewTransactionRepository(db, logger),
+		Order:       NewOrderRepository(db, logger),
 	}
 }

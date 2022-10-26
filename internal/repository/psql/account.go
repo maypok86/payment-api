@@ -30,10 +30,10 @@ func NewAccountRepository(db *postgres.Client, logger *zap.Logger) *AccountRepos
 	}
 }
 
-func (ar *AccountRepository) GetAccountByID(ctx context.Context, id int64) (account.Account, error) {
-	sql, args, err := ar.db.Builder.Select("id", "balance").
+func (ar *AccountRepository) GetAccountByID(ctx context.Context, accountID int64) (account.Account, error) {
+	sql, args, err := ar.db.Builder.Select("account_id", "balance").
 		From(ar.tableName).
-		Where(sq.Eq{"id": id}).
+		Where(sq.Eq{"account_id": accountID}).
 		Limit(1).
 		ToSql()
 	if err != nil {
@@ -43,7 +43,7 @@ func (ar *AccountRepository) GetAccountByID(ctx context.Context, id int64) (acco
 	ar.logger.Debug("get account by id query", zap.String("sql", sql), zap.Any("args", args))
 
 	var entity account.Account
-	if err = ar.db.QueryRow(ctx, sql, args...).Scan(&entity.ID, &entity.Balance); err != nil {
+	if err = ar.db.QueryRow(ctx, sql, args...).Scan(&entity.AccountID, &entity.Balance); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return account.Account{}, fmt.Errorf("get account by id: %w", account.ErrNotFound)
 		}
@@ -67,7 +67,7 @@ func (ar *AccountRepository) updateBalance(
 	var accountBalance int64
 	sql, args, err := ar.db.Builder.Update(ar.tableName).
 		Set("balance", sq.Expr("balance + ?", dto.amount)).
-		Where(sq.Eq{"id": dto.accountID}).
+		Where(sq.Eq{"account_id": dto.accountID}).
 		Suffix("RETURNING balance").
 		ToSql()
 	if err != nil {
@@ -87,11 +87,11 @@ func (ar *AccountRepository) updateBalance(
 	return accountBalance, nil
 }
 
-func (ar *AccountRepository) createAccount(ctx context.Context, id int64) (account.Account, error) {
+func (ar *AccountRepository) createAccount(ctx context.Context, accountID int64) (account.Account, error) {
 	sql, args, err := ar.db.Builder.Insert(ar.tableName).
-		Columns("id").
-		Values(id).
-		Suffix("RETURNING id, balance").
+		Columns("account_id").
+		Values(accountID).
+		Suffix("RETURNING account_id, balance").
 		ToSql()
 	if err != nil {
 		return account.Account{}, fmt.Errorf("build create account query: %w", err)
@@ -100,7 +100,7 @@ func (ar *AccountRepository) createAccount(ctx context.Context, id int64) (accou
 	ar.logger.Debug("create account query", zap.String("sql", sql), zap.Any("args", args))
 
 	var entity account.Account
-	if err := ar.db.QueryRow(ctx, sql, args...).Scan(&entity.ID, &entity.Balance); err != nil {
+	if err := ar.db.QueryRow(ctx, sql, args...).Scan(&entity.AccountID, &entity.Balance); err != nil {
 		var pgErr *pgconn.PgError
 		if errors.As(err, &pgErr) {
 			if pgErr.Code == pgerrcode.UniqueViolation {
@@ -119,21 +119,21 @@ func (ar *AccountRepository) AddBalance(
 	dto account.AddBalanceDTO,
 ) (int64, error) {
 	accountBalance, err := ar.updateBalance(ctx, "add", updateBalanceDTO{
-		accountID: dto.ID,
-		amount:    dto.Balance,
+		accountID: dto.AccountID,
+		amount:    dto.Amount,
 	})
 	if err == nil {
 		return accountBalance, nil
 	}
 
 	if errors.Is(err, account.ErrNotFound) {
-		if _, err := ar.createAccount(ctx, dto.ID); err != nil {
+		if _, err := ar.createAccount(ctx, dto.AccountID); err != nil {
 			return 0, fmt.Errorf("add balance: %w", err)
 		}
 
 		accountBalance, err = ar.updateBalance(ctx, "add", updateBalanceDTO{
-			accountID: dto.ID,
-			amount:    dto.Balance,
+			accountID: dto.AccountID,
+			amount:    dto.Amount,
 		})
 		if err == nil {
 			return accountBalance, nil
@@ -164,4 +164,16 @@ func (ar *AccountRepository) TransferBalance(
 	}
 
 	return senderBalance, receiverBalance, nil
+}
+
+func (ar *AccountRepository) ReserveBalance(ctx context.Context, dto account.ReserveBalanceDTO) (int64, error) {
+	balance, err := ar.updateBalance(ctx, "reserve", updateBalanceDTO{
+		accountID: dto.AccountID,
+		amount:    -dto.Amount,
+	})
+	if err != nil {
+		return 0, fmt.Errorf("reserve balance: %w", err)
+	}
+
+	return balance, nil
 }

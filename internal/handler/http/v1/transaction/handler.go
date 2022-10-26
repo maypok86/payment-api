@@ -43,24 +43,24 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 }
 
 type transactionResponse struct {
-	ID          int64     `json:"id"`
-	Type        string    `json:"type"`
-	SenderID    int64     `json:"sender_id"`
-	ReceiverID  int64     `json:"receiver_id"`
-	Amount      int64     `json:"amount"`
-	Description string    `json:"description"`
-	CreatedAt   time.Time `json:"created_at"`
+	TransactionID int64     `json:"transaction_id"`
+	Type          string    `json:"type"`
+	SenderID      int64     `json:"sender_id"`
+	ReceiverID    int64     `json:"receiver_id"`
+	Amount        int64     `json:"amount"`
+	Description   string    `json:"description"`
+	CreatedAt     time.Time `json:"created_at"`
 }
 
 func newTransactionResponse(transaction transaction.Transaction) transactionResponse {
 	return transactionResponse{
-		ID:          transaction.ID,
-		Type:        transaction.Type.String(),
-		SenderID:    transaction.SenderID,
-		ReceiverID:  transaction.ReceiverID,
-		Amount:      transaction.Amount,
-		Description: transaction.Description,
-		CreatedAt:   transaction.CreatedAt,
+		TransactionID: transaction.TransactionID,
+		Type:          transaction.Type.String(),
+		SenderID:      transaction.SenderID,
+		ReceiverID:    transaction.ReceiverID,
+		Amount:        transaction.Amount,
+		Description:   transaction.Description,
+		CreatedAt:     transaction.CreatedAt,
 	}
 }
 

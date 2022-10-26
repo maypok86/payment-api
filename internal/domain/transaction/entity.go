@@ -20,18 +20,24 @@ type Type struct {
 }
 
 var (
-	Enrollment = Type{"enrollment"}
-	Transfer   = Type{"transfer"}
+	Enrollment        = Type{"enrollment"}
+	Transfer          = Type{"transfer"}
+	Reservation       = Type{"reservation"}
+	CancelReservation = Type{"cancel_reservation"}
 )
 
 var transactionTypeToString = map[Type]string{
-	Enrollment: "enrollment",
-	Transfer:   "transfer",
+	Enrollment:        "enrollment",
+	Transfer:          "transfer",
+	Reservation:       "reservation",
+	CancelReservation: "cancel_reservation",
 }
 
 var stringToTransactionType = map[string]Type{
-	"enrollment": Enrollment,
-	"transfer":   Transfer,
+	"enrollment":         Enrollment,
+	"transfer":           Transfer,
+	"reservation":        Reservation,
+	"cancel_reservation": CancelReservation,
 }
 
 func (t Type) String() string {
@@ -62,13 +68,13 @@ func (t Type) Value() (driver.Value, error) {
 }
 
 type Transaction struct {
-	ID          int64
-	Type        Type
-	SenderID    int64
-	ReceiverID  int64
-	Amount      int64
-	Description string
-	CreatedAt   time.Time
+	TransactionID int64
+	Type          Type
+	SenderID      int64
+	ReceiverID    int64
+	Amount        int64
+	Description   string
+	CreatedAt     time.Time
 }
 
 var (

@@ -30,7 +30,7 @@ func (s *Service) GetTransactionsBySenderID(
 ) ([]Transaction, int, error) {
 	transactions, count, err := s.repository.GetTransactionsBySenderID(ctx, senderID, listParams)
 	if err != nil {
-		return nil, 0, fmt.Errorf("get all transactions: %w", err)
+		return nil, 0, fmt.Errorf("get transactions by sender id: %w", err)
 	}
 
 	return transactions, count, nil

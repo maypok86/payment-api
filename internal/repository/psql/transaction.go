@@ -67,7 +67,7 @@ func (tr *TransactionRepository) GetTransactionsBySenderID(
 	listParams transaction.ListParams,
 ) ([]transaction.Transaction, int, error) {
 	query := tr.db.Builder.Select(
-		"id",
+		"transaction_id",
 		"type",
 		"sender_id",
 		"receiver_id",
@@ -83,14 +83,14 @@ func (tr *TransactionRepository) GetTransactionsBySenderID(
 
 	sql, args, err := query.Limit(listParams.Pagination.Limit).Offset(listParams.Pagination.Offset).ToSql()
 	if err != nil {
-		return nil, 0, fmt.Errorf("build get all transactions query: %w", err)
+		return nil, 0, fmt.Errorf("build get transactions by sender id query: %w", err)
 	}
 
-	tr.logger.Debug("get all transactions query", zap.String("sql", sql), zap.Any("args", args))
+	tr.logger.Debug("get transactions by sender id query", zap.String("sql", sql), zap.Any("args", args))
 
 	rows, err := tr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("run get all transactions query: %w", err)
+		return nil, 0, fmt.Errorf("run get transactions by sender id query: %w", err)
 	}
 	defer rows.Close()
 
@@ -99,7 +99,7 @@ func (tr *TransactionRepository) GetTransactionsBySenderID(
 	for rows.Next() {
 		var entity transaction.Transaction
 		if err := rows.Scan(
-			&entity.ID,
+			&entity.TransactionID,
 			&entity.Type,
 			&entity.SenderID,
 			&entity.ReceiverID,

@@ -10,7 +10,7 @@ import (
 
 type Repository interface {
 	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
-	GetAccountByID(ctx context.Context, id int64) (Account, error)
+	GetAccountByID(ctx context.Context, accountID int64) (Account, error)
 	AddBalance(ctx context.Context, dto AddBalanceDTO) (int64, error)
 	TransferBalance(ctx context.Context, dto TransferBalanceDTO) (int64, int64, error)
 }
@@ -33,8 +33,8 @@ func NewService(repository Repository, transactionRepository TransactionReposito
 	}
 }
 
-func (s *Service) GetBalanceByID(ctx context.Context, id int64) (int64, error) {
-	account, err := s.repository.GetAccountByID(ctx, id)
+func (s *Service) GetBalanceByID(ctx context.Context, accountID int64) (int64, error) {
+	account, err := s.repository.GetAccountByID(ctx, accountID)
 	if err != nil {
 		return 0, fmt.Errorf("get balance by id: %w", err)
 	}
@@ -51,10 +51,10 @@ func (s *Service) AddBalance(ctx context.Context, dto AddBalanceDTO) (balance in
 
 		transactionDTO := transaction.CreateDTO{
 			Type:        transaction.Enrollment,
-			SenderID:    dto.ID,
-			ReceiverID:  dto.ID,
-			Amount:      dto.Balance,
-			Description: fmt.Sprintf("Add %d kopecks to account with id = %d", dto.Balance, dto.ID),
+			SenderID:    dto.AccountID,
+			ReceiverID:  dto.AccountID,
+			Amount:      dto.Amount,
+			Description: fmt.Sprintf("Add %d kopecks to account with id = %d", dto.Amount, dto.AccountID),
 		}
 
 		return s.transactionRepository.CreateTransaction(ctx, transactionDTO)

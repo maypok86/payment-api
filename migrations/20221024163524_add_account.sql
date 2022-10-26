@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE IF NOT EXISTS accounts (
-    id bigint PRIMARY KEY,
+    account_id bigint PRIMARY KEY,
     balance bigint NOT NULL DEFAULT 0 CHECK (balance >= 0)
 );
 -- +goose StatementEnd
