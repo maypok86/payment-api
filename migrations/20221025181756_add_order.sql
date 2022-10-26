@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS orders (
     order_id bigint PRIMARY KEY,
     account_id bigint NOT NULL REFERENCES accounts(account_id),
     service_id bigint NOT NULL,
-    amount bigint NOT NULL,
+    amount bigint NOT NULL CHECK (amount > 0),
     is_paid boolean NOT NULL DEFAULT false,
     is_cancelled boolean NOT NULL DEFAULT false,
     created_at timestamptz NOT NULL DEFAULT now(),

@@ -18,6 +18,6 @@ func NewServices(repositories *psql.Repositories, logger *zap.Logger) *Services 
 	return &Services{
 		Account:     account.NewService(repositories.Account, repositories.Transaction, logger),
 		Transaction: transaction.NewService(repositories.Transaction, logger),
-		Order:       order.NewService(repositories.Order, repositories.Transaction, repositories.Account, logger),
+		Order:       order.NewService(repositories.Order, repositories.Transaction, repositories.Account, repositories.Report, logger),
 	}
 }
