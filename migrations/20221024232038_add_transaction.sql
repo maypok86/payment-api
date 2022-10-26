@@ -7,7 +7,7 @@ CREATE TABLE IF NOT EXISTS transactions (
     type transaction_type NOT NULL,
     sender_id bigint NOT NULL REFERENCES accounts(account_id),
     receiver_id bigint NOT NULL REFERENCES accounts(account_id),
-    amount bigint NOT NULL,
+    amount bigint NOT NULL CHECK (amount > 0),
     description text NOT NULL,
     created_at timestamptz NOT NULL DEFAULT now()
 );
