@@ -12,8 +12,8 @@ import (
 type Repository interface {
 	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
 	CreateOrder(ctx context.Context, dto CreateDTO) (Order, error)
-	PayForOrder(ctx context.Context, orderID int64) error
-	CancelOrder(ctx context.Context, orderID int64) (int64, int64, error)
+	PayForOrder(ctx context.Context, dto PayForDTO) error
+	CancelOrder(ctx context.Context, dto CancelDTO) (int64, int64, error)
 }
 
 type TransactionRepository interface {
@@ -78,17 +78,17 @@ func (s *Service) CreateOrder(ctx context.Context, dto CreateDTO) (order Order, 
 	return order, balance, nil
 }
 
-func (s *Service) PayForOrder(ctx context.Context, orderID int64) error {
-	if err := s.repository.PayForOrder(ctx, orderID); err != nil {
+func (s *Service) PayForOrder(ctx context.Context, dto PayForDTO) error {
+	if err := s.repository.PayForOrder(ctx, dto); err != nil {
 		return fmt.Errorf("pay for order: %w", err)
 	}
 
 	return nil
 }
 
-func (s *Service) CancelOrder(ctx context.Context, orderID int64) (balance int64, err error) {
+func (s *Service) CancelOrder(ctx context.Context, dto CancelDTO) (balance int64, err error) {
 	err = s.repository.WithTx(ctx, func(ctx context.Context) error {
-		accountID, amount, err := s.repository.CancelOrder(ctx, orderID)
+		accountID, amount, err := s.repository.CancelOrder(ctx, dto)
 		if err != nil {
 			return err
 		}
@@ -106,7 +106,7 @@ func (s *Service) CancelOrder(ctx context.Context, orderID int64) (balance int64
 			SenderID:    accountID,
 			ReceiverID:  accountID,
 			Amount:      amount,
-			Description: fmt.Sprintf("Cancel reservation %d kopecks for order with orderID = %d", amount, orderID),
+			Description: fmt.Sprintf("Cancel reservation %d kopecks for order with id = %d", amount, dto.OrderID),
 		}
 
 		return s.transactionRepository.CreateTransaction(ctx, transactionDTO)

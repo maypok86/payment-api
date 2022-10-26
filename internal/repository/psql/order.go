@@ -71,11 +71,14 @@ func (or *OrderRepository) CreateOrder(ctx context.Context, dto order.CreateDTO)
 	return entity, nil
 }
 
-func (or *OrderRepository) PayForOrder(ctx context.Context, orderID int64) error {
+func (or *OrderRepository) PayForOrder(ctx context.Context, dto order.PayForDTO) error {
 	sql, args, err := or.db.Builder.Update(or.tableName).
 		Set("is_paid", true).
 		Where(sq.And{
-			sq.Eq{"order_id": orderID},
+			sq.Eq{"order_id": dto.OrderID},
+			sq.Eq{"account_id": dto.AccountID},
+			sq.Eq{"service_id": dto.ServiceID},
+			sq.Eq{"amount": dto.Amount},
 			sq.Eq{"is_cancelled": false},
 		}).
 		ToSql()
@@ -96,11 +99,14 @@ func (or *OrderRepository) PayForOrder(ctx context.Context, orderID int64) error
 	return nil
 }
 
-func (or *OrderRepository) CancelOrder(ctx context.Context, orderID int64) (int64, int64, error) {
+func (or *OrderRepository) CancelOrder(ctx context.Context, dto order.CancelDTO) (int64, int64, error) {
 	sql, args, err := or.db.Builder.Update(or.tableName).
 		Set("is_cancelled", true).
 		Where(sq.And{
-			sq.Eq{"order_id": orderID},
+			sq.Eq{"order_id": dto.OrderID},
+			sq.Eq{"account_id": dto.AccountID},
+			sq.Eq{"service_id": dto.ServiceID},
+			sq.Eq{"amount": dto.Amount},
 			sq.Eq{"is_paid": false},
 		}).
 		Suffix("RETURNING account_id, amount").

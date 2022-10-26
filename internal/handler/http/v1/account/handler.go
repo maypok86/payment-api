@@ -63,11 +63,6 @@ func (h *Handler) getBalance(c *gin.Context) {
 	})
 }
 
-type addBalanceRequest struct {
-	AccountID int64 `json:"account_id" binding:"required"`
-	Balance   int64 `json:"balance"    binding:"gte=0"`
-}
-
 func (h *Handler) addBalance(c *gin.Context) {
 	var request addBalanceRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
@@ -75,10 +70,7 @@ func (h *Handler) addBalance(c *gin.Context) {
 		return
 	}
 
-	balance, err := h.service.AddBalance(c, account.AddBalanceDTO{
-		AccountID: request.AccountID,
-		Amount:    request.Balance,
-	})
+	balance, err := h.service.AddBalance(c, request.toDTO())
 	if err != nil {
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Add balance error")
 		return
@@ -87,12 +79,6 @@ func (h *Handler) addBalance(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"balance": balance,
 	})
-}
-
-type transferBalanceRequest struct {
-	SenderID   int64 `json:"sender_id"   binding:"required"`
-	ReceiverID int64 `json:"receiver_id" binding:"required"`
-	Amount     int64 `json:"amount"      binding:"required,gt=0"`
 }
 
 type transferBalanceResponse struct {
@@ -107,11 +93,7 @@ func (h *Handler) transferBalance(c *gin.Context) {
 		return
 	}
 
-	senderBalance, receiverBalance, err := h.service.TransferBalance(c, account.TransferBalanceDTO{
-		SenderID:   request.SenderID,
-		ReceiverID: request.ReceiverID,
-		Amount:     request.Amount,
-	})
+	senderBalance, receiverBalance, err := h.service.TransferBalance(c, request.toDTO())
 	if err != nil {
 		if errors.Is(err, account.ErrNotFound) {
 			h.ErrorResponse(c, http.StatusNotFound, err, "Sender or receiver not found")
