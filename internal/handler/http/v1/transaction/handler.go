@@ -11,6 +11,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=handler.go -destination=mock_test.go -package=transaction_test
+
 type Service interface {
 	GetTransactionsBySenderID(
 		ctx context.Context,
@@ -36,11 +38,11 @@ func NewHandler(service Service, logger *zap.Logger) *Handler {
 func (h *Handler) InitAPI(router *gin.RouterGroup) {
 	transactionsGroup := router.Group("/transaction")
 	{
-		transactionsGroup.GET("/:sender_id", h.getTransactionsBySenderID)
+		transactionsGroup.GET("/:sender_id", h.GetTransactionsBySenderID)
 	}
 }
 
-func (h *Handler) getTransactionsBySenderID(c *gin.Context) {
+func (h *Handler) GetTransactionsBySenderID(c *gin.Context) {
 	senderID, err := h.ParseIDFromPath(c, "sender_id")
 	if err != nil {
 		h.ErrorResponse(c, http.StatusBadRequest, err, "Transactions not found. id is not valid")
@@ -69,11 +71,11 @@ func (h *Handler) getTransactionsBySenderID(c *gin.Context) {
 		return
 	}
 
-	transactions, count, err := h.service.GetTransactionsBySenderID(c, senderID, listParams)
+	transactions, count, err := h.service.GetTransactionsBySenderID(c.Request.Context(), senderID, listParams)
 	if err != nil {
 		h.ErrorResponse(c, http.StatusInternalServerError, err, "Get transactions by sender id error")
 		return
 	}
 
-	c.JSON(http.StatusOK, newTransactionListResponse(transactions, params, count))
+	c.JSON(http.StatusOK, NewListResponse(transactions, params, count))
 }

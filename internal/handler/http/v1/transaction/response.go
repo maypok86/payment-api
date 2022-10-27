@@ -7,7 +7,7 @@ import (
 	"github.com/maypok86/payment-api/internal/pkg/pagination"
 )
 
-type transactionResponse struct {
+type Response struct {
 	TransactionID int64     `json:"transaction_id"`
 	Type          string    `json:"type"`
 	SenderID      int64     `json:"sender_id"`
@@ -17,8 +17,8 @@ type transactionResponse struct {
 	CreatedAt     time.Time `json:"created_at"`
 }
 
-func newTransactionResponse(transaction transaction.Transaction) transactionResponse {
-	return transactionResponse{
+func NewResponse(transaction transaction.Transaction) Response {
+	return Response{
 		TransactionID: transaction.TransactionID,
 		Type:          transaction.Type.String(),
 		SenderID:      transaction.SenderID,
@@ -29,23 +29,23 @@ func newTransactionResponse(transaction transaction.Transaction) transactionResp
 	}
 }
 
-type transactionListResponse struct {
-	Transactions []transactionResponse `json:"transactions"`
-	Range        pagination.ListRange  `json:"range"`
+type ListResponse struct {
+	Transactions []Response           `json:"transactions"`
+	Range        pagination.ListRange `json:"range"`
 }
 
-func newTransactionListResponse(
+func NewListResponse(
 	transactions []transaction.Transaction,
 	params pagination.Params,
 	count int,
-) transactionListResponse {
-	responses := make([]transactionResponse, 0, len(transactions))
+) ListResponse {
+	responses := make([]Response, 0, len(transactions))
 
 	for _, tr := range transactions {
-		responses = append(responses, newTransactionResponse(tr))
+		responses = append(responses, NewResponse(tr))
 	}
 
-	return transactionListResponse{
+	return ListResponse{
 		Transactions: responses,
 		Range:        pagination.NewListRange(params, count),
 	}
