@@ -7,26 +7,34 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
-	"github.com/maypok86/payment-api/internal/config"
 	"github.com/maypok86/payment-api/internal/domain/report"
 	"github.com/maypok86/payment-api/internal/pkg/handler"
 	"go.uber.org/zap"
 )
+
+//go:generate mockgen -source=handler.go -destination=mock_test.go -package=report_test
 
 type Service interface {
 	GetReportKey(ctx context.Context, dto report.GetMapDTO) (string, error)
 	GetReportContent(ctx context.Context, filename string) ([]byte, error)
 }
 
+type Config struct {
+	ReportHost string
+	ReportPort string
+}
+
 type Handler struct {
 	*handler.BaseHandler
+	cfg     Config
 	service Service
 	logger  *zap.Logger
 }
 
-func NewHandler(service Service, logger *zap.Logger) *Handler {
+func NewHandler(cfg Config, service Service, logger *zap.Logger) *Handler {
 	return &Handler{
 		BaseHandler: handler.NewBaseHandler(logger),
+		cfg:         cfg,
 		service:     service,
 		logger:      logger,
 	}
@@ -35,31 +43,19 @@ func NewHandler(service Service, logger *zap.Logger) *Handler {
 func (h *Handler) InitAPI(router *gin.RouterGroup) {
 	reportGroup := router.Group("/report")
 	{
-		reportGroup.POST("/link", h.getReportLink)
-		reportGroup.GET("/", h.downloadReport)
+		reportGroup.POST("/link", h.GetReportLink)
+		reportGroup.GET("/", h.DownloadReport)
 	}
 }
 
-type getReportLinkRequest struct {
-	Month int64 `json:"month" binding:"required,min=1,max=12"`
-	Year  int64 `json:"year"  binding:"required,min=2022"`
-}
-
-func (r getReportLinkRequest) toDTO() report.GetMapDTO {
-	return report.GetMapDTO{
-		Month: r.Month,
-		Year:  r.Year,
-	}
-}
-
-func (h *Handler) getReportLink(c *gin.Context) {
-	var request getReportLinkRequest
+func (h *Handler) GetReportLink(c *gin.Context) {
+	var request GetReportLinkRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		h.ErrorResponse(c, http.StatusBadRequest, err, "Get report link error. Invalid request")
 		return
 	}
 
-	key, err := h.service.GetReportKey(c, request.toDTO())
+	key, err := h.service.GetReportKey(c.Request.Context(), request.ToDTO())
 	if err != nil {
 		switch {
 		case errors.Is(err, report.ErrNotFound):
@@ -74,24 +70,26 @@ func (h *Handler) getReportLink(c *gin.Context) {
 		return
 	}
 
-	port := config.Get().HTTP.Port
+	link := fmt.Sprintf("http://%s:%s/api/v1/report?key=%s", h.cfg.ReportHost, h.cfg.ReportPort, key)
 
-	// I don't want to configure it
-	link := fmt.Sprintf("http://localhost:%s/api/v1/report?key=%s", port, key)
-
-	c.JSON(http.StatusOK, gin.H{
-		"link": link,
+	c.JSON(http.StatusOK, GetReportLinkResponse{
+		Link: link,
 	})
 }
 
-func (h *Handler) downloadReport(c *gin.Context) {
+func (h *Handler) DownloadReport(c *gin.Context) {
 	key := c.Query("key")
 	if key == "" {
-		h.ErrorResponse(c, http.StatusBadRequest, nil, "Download report error. Invalid request")
+		h.ErrorResponse(
+			c,
+			http.StatusBadRequest,
+			errors.New("query key is empty"),
+			"Download report error. Invalid request",
+		)
 		return
 	}
 
-	content, err := h.service.GetReportContent(c, key)
+	content, err := h.service.GetReportContent(c.Request.Context(), key)
 	if err != nil {
 		if errors.Is(err, report.ErrNotFound) {
 			h.ErrorResponse(c, http.StatusNotFound, err, "Download report error. Report not found")

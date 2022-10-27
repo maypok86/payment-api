@@ -14,6 +14,8 @@ type env struct {
 	environment      string
 	httpHost         string
 	httpPort         string
+	reportHost       string
+	reportPort       string
 	postgresHost     string
 	postgresPort     string
 	postgresDBName   string
@@ -27,6 +29,8 @@ func setEnv(t *testing.T, env env) {
 	require.NoError(t, os.Setenv("ENVIRONMENT", env.environment))
 	require.NoError(t, os.Setenv("HTTP_HOST", env.httpHost))
 	require.NoError(t, os.Setenv("HTTP_PORT", env.httpPort))
+	require.NoError(t, os.Setenv("REPORT_HOST", env.reportHost))
+	require.NoError(t, os.Setenv("REPORT_PORT", env.reportPort))
 	require.NoError(t, os.Setenv("POSTGRES_HOST", env.postgresHost))
 	require.NoError(t, os.Setenv("POSTGRES_PORT", env.postgresPort))
 	require.NoError(t, os.Setenv("POSTGRES_DBNAME", env.postgresDBName))
@@ -41,6 +45,8 @@ func TestGet(t *testing.T) {
 		environment:      "test",
 		httpHost:         "0.0.0.0",
 		httpPort:         "8080",
+		reportHost:       "localhost",
+		reportPort:       "8080",
 		postgresHost:     "postgres",
 		postgresPort:     "5431",
 		postgresDBName:   "test_payment-api",
@@ -65,6 +71,10 @@ func TestGet(t *testing.T) {
 			Password:    "test",
 			SSLMode:     "disable",
 			MaxPoolSize: 4,
+		},
+		Report: config.Report{
+			Host: "localhost",
+			Port: "8080",
 		},
 		Logger: config.Logger{
 			Level: "info",
