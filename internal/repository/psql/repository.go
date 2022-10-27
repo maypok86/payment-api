@@ -9,6 +9,7 @@ type Repositories struct {
 	Account     *AccountRepository
 	Transaction *TransactionRepository
 	Order       *OrderRepository
+	Report      *ReportRepository
 }
 
 func NewRepositories(db *postgres.Client, logger *zap.Logger) *Repositories {
@@ -16,5 +17,6 @@ func NewRepositories(db *postgres.Client, logger *zap.Logger) *Repositories {
 		Account:     NewAccountRepository(db, logger),
 		Transaction: NewTransactionRepository(db, logger),
 		Order:       NewOrderRepository(db, logger),
+		Report:      NewReportRepository(db, logger),
 	}
 }

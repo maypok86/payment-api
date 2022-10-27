@@ -5,6 +5,7 @@ import (
 	"github.com/maypok86/payment-api/internal/domain"
 	"github.com/maypok86/payment-api/internal/handler/http/v1/account"
 	"github.com/maypok86/payment-api/internal/handler/http/v1/order"
+	"github.com/maypok86/payment-api/internal/handler/http/v1/report"
 	"github.com/maypok86/payment-api/internal/handler/http/v1/transaction"
 	"go.uber.org/zap"
 )
@@ -27,5 +28,6 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 		account.NewHandler(h.services.Account, h.logger).InitAPI(v1)
 		transaction.NewHandler(h.services.Transaction, h.logger).InitAPI(v1)
 		order.NewHandler(h.services.Order, h.logger).InitAPI(v1)
+		report.NewHandler(h.services.Report, h.logger).InitAPI(v1)
 	}
 }
