@@ -6,7 +6,7 @@ import (
 	"github.com/maypok86/payment-api/internal/domain/order"
 )
 
-type orderResponse struct {
+type Response struct {
 	OrderID     int64     `json:"order_id"`
 	AccountID   int64     `json:"account_id"`
 	ServiceID   int64     `json:"service_id"`
@@ -17,8 +17,8 @@ type orderResponse struct {
 	UpdatedAt   time.Time `json:"updated_at"`
 }
 
-func newOrderResponse(entity order.Order) orderResponse {
-	return orderResponse{
+func NewResponse(entity order.Order) Response {
+	return Response{
 		OrderID:     entity.OrderID,
 		AccountID:   entity.AccountID,
 		ServiceID:   entity.ServiceID,
@@ -30,14 +30,18 @@ func newOrderResponse(entity order.Order) orderResponse {
 	}
 }
 
-type createOrderResponse struct {
-	Order   orderResponse `json:"order"`
-	Balance int64         `json:"balance"`
+type CreateOrderResponse struct {
+	Order   Response `json:"order"`
+	Balance int64    `json:"balance"`
 }
 
-func newCreateOrderResponse(entity order.Order, balance int64) createOrderResponse {
-	return createOrderResponse{
-		Order:   newOrderResponse(entity),
+func NewCreateOrderResponse(entity order.Order, balance int64) CreateOrderResponse {
+	return CreateOrderResponse{
+		Order:   NewResponse(entity),
 		Balance: balance,
 	}
+}
+
+type CancelOrderResponse struct {
+	Balance int64 `json:"balance"`
 }

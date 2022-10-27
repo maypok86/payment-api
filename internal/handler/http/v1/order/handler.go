@@ -12,6 +12,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=handler.go -destination=mock_test.go -package=order_test
+
 type Service interface {
 	CreateOrder(ctx context.Context, dto order.CreateDTO) (order.Order, int64, error)
 	PayForOrder(ctx context.Context, dto order.PayForDTO) error
@@ -35,24 +37,24 @@ func NewHandler(service Service, logger *zap.Logger) *Handler {
 func (h *Handler) InitAPI(router *gin.RouterGroup) {
 	orderGroup := router.Group("/order")
 	{
-		orderGroup.POST("/create", h.createOrder)
-		orderGroup.POST("/pay", h.payForOrder)
-		orderGroup.POST("/cancel", h.cancelOrder)
+		orderGroup.POST("/create", h.CreateOrder)
+		orderGroup.POST("/pay", h.PayForOrder)
+		orderGroup.POST("/cancel", h.CancelOrder)
 	}
 }
 
-func (h *Handler) createOrder(c *gin.Context) {
-	var request createOrderRequest
+func (h *Handler) CreateOrder(c *gin.Context) {
+	var request CreateOrderRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		h.ErrorResponse(c, http.StatusBadRequest, err, "Create order error. Invalid request")
 		return
 	}
 
-	entity, balance, err := h.service.CreateOrder(c, request.toDTO())
+	entity, balance, err := h.service.CreateOrder(c.Request.Context(), request.ToDTO())
 	if err != nil {
 		switch {
 		case errors.Is(err, account.ErrNotFound):
-			h.ErrorResponse(c, http.StatusBadRequest, err, "Create order error. Account not found")
+			h.ErrorResponse(c, http.StatusNotFound, err, "Create order error. Account not found")
 			return
 		case errors.Is(err, order.ErrAlreadyExist):
 			h.ErrorResponse(c, http.StatusConflict, err, "Create order error. Order already exist")
@@ -63,19 +65,19 @@ func (h *Handler) createOrder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, newCreateOrderResponse(entity, balance))
+	c.JSON(http.StatusOK, NewCreateOrderResponse(entity, balance))
 }
 
-func (h *Handler) payForOrder(c *gin.Context) {
-	var request payForOrderRequest
+func (h *Handler) PayForOrder(c *gin.Context) {
+	var request PayForOrderRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		h.ErrorResponse(c, http.StatusBadRequest, err, "Pay for order error. Invalid request")
 		return
 	}
 
-	if err := h.service.PayForOrder(c, request.toDTO()); err != nil {
+	if err := h.service.PayForOrder(c.Request.Context(), request.ToDTO()); err != nil {
 		if errors.Is(err, order.ErrNotFound) {
-			h.ErrorResponse(c, http.StatusBadRequest, err, "Pay for order error. Order not found")
+			h.ErrorResponse(c, http.StatusNotFound, err, "Pay for order error. Order not found")
 			return
 		}
 
@@ -86,21 +88,21 @@ func (h *Handler) payForOrder(c *gin.Context) {
 	c.Status(http.StatusOK)
 }
 
-func (h *Handler) cancelOrder(c *gin.Context) {
-	var request cancelOrderRequest
+func (h *Handler) CancelOrder(c *gin.Context) {
+	var request CancelOrderRequest
 	if err := c.ShouldBindJSON(&request); err != nil {
 		h.ErrorResponse(c, http.StatusBadRequest, err, "Cancel order error. Invalid request")
 		return
 	}
 
-	balance, err := h.service.CancelOrder(c, request.toDTO())
+	balance, err := h.service.CancelOrder(c.Request.Context(), request.ToDTO())
 	if err != nil {
 		switch {
 		case errors.Is(err, order.ErrNotFound):
-			h.ErrorResponse(c, http.StatusBadRequest, err, "Cancel order error. Order not found")
+			h.ErrorResponse(c, http.StatusNotFound, err, "Cancel order error. Order not found")
 			return
 		case errors.Is(err, account.ErrNotFound):
-			h.ErrorResponse(c, http.StatusBadRequest, err, "Cancel order error. Account not found")
+			h.ErrorResponse(c, http.StatusNotFound, err, "Cancel order error. Account not found")
 			return
 		}
 
@@ -108,7 +110,7 @@ func (h *Handler) cancelOrder(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{
-		"balance": balance,
+	c.JSON(http.StatusOK, CancelOrderResponse{
+		Balance: balance,
 	})
 }

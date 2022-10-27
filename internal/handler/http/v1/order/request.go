@@ -2,14 +2,14 @@ package order
 
 import "github.com/maypok86/payment-api/internal/domain/order"
 
-type createOrderRequest struct {
+type CreateOrderRequest struct {
 	OrderID   int64 `json:"order_id"   binding:"required"`
 	AccountID int64 `json:"account_id" binding:"required"`
 	ServiceID int64 `json:"service_id" binding:"required"`
 	Amount    int64 `json:"amount"     binding:"required,gt=0"`
 }
 
-func (r createOrderRequest) toDTO() order.CreateDTO {
+func (r CreateOrderRequest) ToDTO() order.CreateDTO {
 	return order.CreateDTO{
 		OrderID:   r.OrderID,
 		AccountID: r.AccountID,
@@ -18,14 +18,14 @@ func (r createOrderRequest) toDTO() order.CreateDTO {
 	}
 }
 
-type payForOrderRequest struct {
+type PayForOrderRequest struct {
 	OrderID   int64 `json:"order_id"   binding:"required"`
 	AccountID int64 `json:"account_id" binding:"required"`
 	ServiceID int64 `json:"service_id" binding:"required"`
 	Amount    int64 `json:"amount"     binding:"required,gt=0"`
 }
 
-func (r payForOrderRequest) toDTO() order.PayForDTO {
+func (r PayForOrderRequest) ToDTO() order.PayForDTO {
 	return order.PayForDTO{
 		OrderID:   r.OrderID,
 		AccountID: r.AccountID,
@@ -34,14 +34,14 @@ func (r payForOrderRequest) toDTO() order.PayForDTO {
 	}
 }
 
-type cancelOrderRequest struct {
+type CancelOrderRequest struct {
 	OrderID   int64 `json:"order_id"   binding:"required"`
 	AccountID int64 `json:"account_id" binding:"required"`
 	ServiceID int64 `json:"service_id" binding:"required"`
 	Amount    int64 `json:"amount"     binding:"required,gt=0"`
 }
 
-func (r cancelOrderRequest) toDTO() order.CancelDTO {
+func (r CancelOrderRequest) ToDTO() order.CancelDTO {
 	return order.CancelDTO{
 		OrderID:   r.OrderID,
 		AccountID: r.AccountID,

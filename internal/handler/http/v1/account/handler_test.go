@@ -15,7 +15,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/golang/mock/gomock"
-	account_domain "github.com/maypok86/payment-api/internal/domain/account"
+	domain "github.com/maypok86/payment-api/internal/domain/account"
 	"github.com/maypok86/payment-api/internal/handler/http/v1/account"
 	"github.com/maypok86/payment-api/internal/pkg/handler"
 	"github.com/maypok86/payment-api/internal/pkg/logger"
@@ -88,7 +88,7 @@ func TestHandler_GetBalance(t *testing.T) {
 		{
 			name: "account not found",
 			mock: func(service *MockService) {
-				service.EXPECT().GetBalanceByID(ctx, fakeAccountID).Return(int64(0), account_domain.ErrNotFound)
+				service.EXPECT().GetBalanceByID(ctx, fakeAccountID).Return(int64(0), domain.ErrNotFound)
 			},
 			args: args{
 				param: fakeParam,
@@ -310,7 +310,7 @@ func TestHandler_TransferBalance(t *testing.T) {
 			mock: func(service *MockService) {
 				service.EXPECT().
 					TransferBalance(ctx, fakeRequest.ToDTO()).
-					Return(int64(0), int64(0), account_domain.ErrNotFound)
+					Return(int64(0), int64(0), domain.ErrNotFound)
 			},
 			args: args{
 				request: fakeRequest,
@@ -334,7 +334,7 @@ func TestHandler_TransferBalance(t *testing.T) {
 			statusCode: http.StatusInternalServerError,
 		},
 		{
-			name: "success get balance",
+			name: "success transfer balance",
 			mock: func(service *MockService) {
 				service.EXPECT().
 					TransferBalance(ctx, fakeRequest.ToDTO()).
