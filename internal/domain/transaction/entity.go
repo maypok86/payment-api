@@ -41,7 +41,7 @@ var stringToTransactionType = map[string]Type{
 }
 
 func (t Type) String() string {
-	return t.string
+	return transactionTypeToString[t]
 }
 
 func (t *Type) Scan(value interface{}) error {

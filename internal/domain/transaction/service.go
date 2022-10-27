@@ -7,6 +7,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=service.go -destination=mock_test.go -package=transaction_test
+
 type Repository interface {
 	GetTransactionsBySenderID(ctx context.Context, senderID int64, listParams ListParams) ([]Transaction, int, error)
 }
