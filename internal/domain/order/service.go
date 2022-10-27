@@ -9,8 +9,11 @@ import (
 	"go.uber.org/zap"
 )
 
-type Repository interface {
+type Transactor interface {
 	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
+}
+
+type Repository interface {
 	CreateOrder(ctx context.Context, dto CreateDTO) (Order, error)
 	PayForOrder(ctx context.Context, dto PayForDTO) error
 	CancelOrder(ctx context.Context, dto CancelDTO) (int64, int64, error)
@@ -26,6 +29,7 @@ type AccountRepository interface {
 }
 
 type Service struct {
+	transactor            Transactor
 	repository            Repository
 	transactionRepository TransactionRepository
 	accountRepository     AccountRepository
@@ -33,12 +37,14 @@ type Service struct {
 }
 
 func NewService(
+	transactor Transactor,
 	repository Repository,
 	transactionRepository TransactionRepository,
 	accountRepository AccountRepository,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
+		transactor:            transactor,
 		repository:            repository,
 		transactionRepository: transactionRepository,
 		accountRepository:     accountRepository,
@@ -47,7 +53,7 @@ func NewService(
 }
 
 func (s *Service) CreateOrder(ctx context.Context, dto CreateDTO) (order Order, balance int64, err error) {
-	err = s.repository.WithTx(ctx, func(ctx context.Context) error {
+	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		balance, err = s.accountRepository.ReserveBalance(ctx, account.ReserveBalanceDTO{
 			AccountID: dto.AccountID,
 			Amount:    dto.Amount,
@@ -87,7 +93,7 @@ func (s *Service) PayForOrder(ctx context.Context, dto PayForDTO) error {
 }
 
 func (s *Service) CancelOrder(ctx context.Context, dto CancelDTO) (balance int64, err error) {
-	err = s.repository.WithTx(ctx, func(ctx context.Context) error {
+	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		accountID, amount, err := s.repository.CancelOrder(ctx, dto)
 		if err != nil {
 			return err

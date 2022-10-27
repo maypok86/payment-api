@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"context"
+
 	"github.com/maypok86/payment-api/internal/cache"
 	"github.com/maypok86/payment-api/internal/domain/account"
 	"github.com/maypok86/payment-api/internal/domain/order"
@@ -10,6 +12,10 @@ import (
 	"go.uber.org/zap"
 )
 
+type Transactor interface {
+	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
+}
+
 type Services struct {
 	Account     *account.Service
 	Transaction *transaction.Service
@@ -17,11 +23,22 @@ type Services struct {
 	Report      *report.Service
 }
 
-func NewServices(repositories *psql.Repositories, reportCache *cache.ReportCache, logger *zap.Logger) *Services {
+func NewServices(
+	transactor Transactor,
+	repositories *psql.Repositories,
+	reportCache *cache.ReportCache,
+	logger *zap.Logger,
+) *Services {
 	return &Services{
-		Account:     account.NewService(repositories.Account, repositories.Transaction, logger),
+		Account:     account.NewService(transactor, repositories.Account, repositories.Transaction, logger),
 		Transaction: transaction.NewService(repositories.Transaction, logger),
-		Order:       order.NewService(repositories.Order, repositories.Transaction, repositories.Account, logger),
-		Report:      report.NewService(repositories.Report, reportCache, logger),
+		Order: order.NewService(
+			transactor,
+			repositories.Order,
+			repositories.Transaction,
+			repositories.Account,
+			logger,
+		),
+		Report: report.NewService(repositories.Report, reportCache, logger),
 	}
 }

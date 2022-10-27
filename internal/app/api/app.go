@@ -43,9 +43,10 @@ func New(ctx context.Context, logger *zap.Logger) (*App, error) {
 		return nil, fmt.Errorf("connect to postgres: %w", err)
 	}
 
+	postgresTransactor := postgres.NewTransactor(db)
 	reportCache := cache.NewReportCache()
 	repositories := psql.NewRepositories(db, logger)
-	services := domain.NewServices(repositories, reportCache, logger)
+	services := domain.NewServices(postgresTransactor, repositories, reportCache, logger)
 
 	router := httphandler.NewRouter(services, logger)
 

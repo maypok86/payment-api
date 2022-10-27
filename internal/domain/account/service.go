@@ -8,8 +8,13 @@ import (
 	"go.uber.org/zap"
 )
 
-type Repository interface {
+//go:generate mockgen -source=service.go -destination=mock_test.go -package=account_test
+
+type Transactor interface {
 	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
+}
+
+type Repository interface {
 	GetAccountByID(ctx context.Context, accountID int64) (Account, error)
 	AddBalance(ctx context.Context, dto AddBalanceDTO) (int64, error)
 	TransferBalance(ctx context.Context, dto TransferBalanceDTO) (int64, int64, error)
@@ -20,13 +25,20 @@ type TransactionRepository interface {
 }
 
 type Service struct {
+	transactor            Transactor
 	repository            Repository
 	transactionRepository TransactionRepository
 	logger                *zap.Logger
 }
 
-func NewService(repository Repository, transactionRepository TransactionRepository, logger *zap.Logger) *Service {
+func NewService(
+	transactor Transactor,
+	repository Repository,
+	transactionRepository TransactionRepository,
+	logger *zap.Logger,
+) *Service {
 	return &Service{
+		transactor:            transactor,
 		repository:            repository,
 		transactionRepository: transactionRepository,
 		logger:                logger,
@@ -43,7 +55,7 @@ func (s *Service) GetBalanceByID(ctx context.Context, accountID int64) (int64, e
 }
 
 func (s *Service) AddBalance(ctx context.Context, dto AddBalanceDTO) (balance int64, err error) {
-	err = s.repository.WithTx(ctx, func(ctx context.Context) error {
+	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		balance, err = s.repository.AddBalance(ctx, dto)
 		if err != nil {
 			return err
@@ -70,7 +82,7 @@ func (s *Service) TransferBalance(
 	ctx context.Context,
 	dto TransferBalanceDTO,
 ) (senderBalance int64, receiverBalance int64, err error) {
-	err = s.repository.WithTx(ctx, func(ctx context.Context) error {
+	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
 		senderBalance, receiverBalance, err = s.repository.TransferBalance(ctx, dto)
 		if err != nil {
 			return err

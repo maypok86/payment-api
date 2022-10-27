@@ -19,6 +19,7 @@ issues:
         - dupl
         - gocyclo
         - gosec
+        - funlen
 
 linters:
   disable-all: true

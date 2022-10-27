@@ -15,7 +15,6 @@ import (
 )
 
 type AccountRepository struct {
-	*postgres.Repository
 	tableName string
 	db        *postgres.Client
 	logger    *zap.Logger
@@ -23,10 +22,9 @@ type AccountRepository struct {
 
 func NewAccountRepository(db *postgres.Client, logger *zap.Logger) *AccountRepository {
 	return &AccountRepository{
-		Repository: postgres.NewRepository(db),
-		tableName:  "accounts",
-		db:         db,
-		logger:     logger,
+		tableName: "accounts",
+		db:        db,
+		logger:    logger,
 	}
 }
 
