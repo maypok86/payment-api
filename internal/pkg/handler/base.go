@@ -19,14 +19,14 @@ func NewBaseHandler(logger *zap.Logger) *BaseHandler {
 	}
 }
 
-type errorResponse struct {
+type ErrorResponse struct {
 	Message string `json:"message"`
 }
 
 func (bh *BaseHandler) ErrorResponse(c *gin.Context, status int, err error, message string) {
 	bh.logger.Error(err.Error())
 
-	c.AbortWithStatusJSON(status, errorResponse{
+	c.AbortWithStatusJSON(status, ErrorResponse{
 		Message: message,
 	})
 }
