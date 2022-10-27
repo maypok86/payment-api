@@ -3,7 +3,6 @@ package order
 import (
 	"context"
 	"fmt"
-	"github.com/maypok86/payment-api/internal/domain/report"
 
 	"github.com/maypok86/payment-api/internal/domain/account"
 	"github.com/maypok86/payment-api/internal/domain/transaction"
@@ -21,10 +20,6 @@ type TransactionRepository interface {
 	CreateTransaction(ctx context.Context, dto transaction.CreateDTO) error
 }
 
-type ReportRepository interface {
-	AddAmount(ctx context.Context, dto report.AddAmountDTO) (int64, error)
-}
-
 type AccountRepository interface {
 	ReserveBalance(ctx context.Context, dto account.ReserveBalanceDTO) (int64, error)
 	ReturnBalance(ctx context.Context, dto account.ReturnBalanceDTO) (int64, error)
@@ -34,7 +29,6 @@ type Service struct {
 	repository            Repository
 	transactionRepository TransactionRepository
 	accountRepository     AccountRepository
-	reportRepository      ReportRepository
 	logger                *zap.Logger
 }
 
@@ -42,14 +36,12 @@ func NewService(
 	repository Repository,
 	transactionRepository TransactionRepository,
 	accountRepository AccountRepository,
-	reportRepository ReportRepository,
 	logger *zap.Logger,
 ) *Service {
 	return &Service{
 		repository:            repository,
 		transactionRepository: transactionRepository,
 		accountRepository:     accountRepository,
-		reportRepository:      reportRepository,
 		logger:                logger,
 	}
 }
@@ -87,19 +79,7 @@ func (s *Service) CreateOrder(ctx context.Context, dto CreateDTO) (order Order, 
 }
 
 func (s *Service) PayForOrder(ctx context.Context, dto PayForDTO) error {
-	err := s.repository.WithTx(ctx, func(ctx context.Context) error {
-		if err := s.repository.PayForOrder(ctx, dto); err != nil {
-			return err
-		}
-
-		_, err := s.reportRepository.AddAmount(ctx, report.AddAmountDTO{
-			ServiceID: dto.ServiceID,
-			Amount:    dto.Amount,
-		})
-
-		return err
-	})
-	if err != nil {
+	if err := s.repository.PayForOrder(ctx, dto); err != nil {
 		return fmt.Errorf("pay for order: %w", err)
 	}
 

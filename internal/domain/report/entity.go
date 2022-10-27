@@ -1,18 +1,8 @@
 package report
 
-import (
-	"errors"
-	"time"
-)
+import "errors"
 
 var (
-	ErrAlreadyExist = errors.New("report with given fields already exist")
-	ErrNotFound     = errors.New("report not found")
+	ErrIsNotAvailable = errors.New("this report is not available yet")
+	ErrNotFound       = errors.New("report not found")
 )
-
-type Report struct {
-	ReportID  int64
-	ServiceID int64
-	Amount    int64
-	CreatedAt time.Time
-}
