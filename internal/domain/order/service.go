@@ -9,6 +9,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=service.go -destination=mock_test.go -package=order_test
+
 type Transactor interface {
 	WithTx(ctx context.Context, txFunc func(ctx context.Context) error) error
 }
@@ -16,7 +18,7 @@ type Transactor interface {
 type Repository interface {
 	CreateOrder(ctx context.Context, dto CreateDTO) (Order, error)
 	PayForOrder(ctx context.Context, dto PayForDTO) error
-	CancelOrder(ctx context.Context, dto CancelDTO) (int64, int64, error)
+	CancelOrder(ctx context.Context, dto CancelDTO) error
 }
 
 type TransactionRepository interface {
@@ -78,7 +80,7 @@ func (s *Service) CreateOrder(ctx context.Context, dto CreateDTO) (order Order, 
 		return s.transactionRepository.CreateTransaction(ctx, transactionDTO)
 	})
 	if err != nil {
-		return Order{}, 0, err
+		return Order{}, 0, fmt.Errorf("create order: %w", err)
 	}
 
 	return order, balance, nil
@@ -94,14 +96,13 @@ func (s *Service) PayForOrder(ctx context.Context, dto PayForDTO) error {
 
 func (s *Service) CancelOrder(ctx context.Context, dto CancelDTO) (balance int64, err error) {
 	err = s.transactor.WithTx(ctx, func(ctx context.Context) error {
-		accountID, amount, err := s.repository.CancelOrder(ctx, dto)
-		if err != nil {
+		if err := s.repository.CancelOrder(ctx, dto); err != nil {
 			return err
 		}
 
 		balance, err = s.accountRepository.ReturnBalance(ctx, account.ReturnBalanceDTO{
-			AccountID: accountID,
-			Amount:    amount,
+			AccountID: dto.AccountID,
+			Amount:    dto.Amount,
 		})
 		if err != nil {
 			return err
@@ -109,10 +110,10 @@ func (s *Service) CancelOrder(ctx context.Context, dto CancelDTO) (balance int64
 
 		transactionDTO := transaction.CreateDTO{
 			Type:        transaction.CancelReservation,
-			SenderID:    accountID,
-			ReceiverID:  accountID,
-			Amount:      amount,
-			Description: fmt.Sprintf("Cancel reservation %d kopecks for order with id = %d", amount, dto.OrderID),
+			SenderID:    dto.AccountID,
+			ReceiverID:  dto.AccountID,
+			Amount:      dto.Amount,
+			Description: fmt.Sprintf("Cancel reservation %d kopecks for order with id = %d", dto.Amount, dto.OrderID),
 		}
 
 		return s.transactionRepository.CreateTransaction(ctx, transactionDTO)

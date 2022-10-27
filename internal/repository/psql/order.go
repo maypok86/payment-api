@@ -8,7 +8,6 @@ import (
 	sq "github.com/Masterminds/squirrel"
 	"github.com/jackc/pgconn"
 	"github.com/jackc/pgerrcode"
-	"github.com/jackc/pgx/v4"
 	"github.com/maypok86/payment-api/internal/domain/order"
 	"github.com/maypok86/payment-api/internal/pkg/postgres"
 	"go.uber.org/zap"
@@ -69,7 +68,7 @@ func (or *OrderRepository) CreateOrder(ctx context.Context, dto order.CreateDTO)
 	return entity, nil
 }
 
-func (or *OrderRepository) PayForOrder(ctx context.Context, dto order.PayForDTO) error {
+func (or *OrderRepository) PayForOrder(ctx context.Context, dto order.PayForDTO) error { //nolint:dupl
 	sql, args, err := or.db.Builder.Update(or.tableName).
 		Set("is_paid", true).
 		Where(sq.And{
@@ -97,7 +96,7 @@ func (or *OrderRepository) PayForOrder(ctx context.Context, dto order.PayForDTO)
 	return nil
 }
 
-func (or *OrderRepository) CancelOrder(ctx context.Context, dto order.CancelDTO) (int64, int64, error) {
+func (or *OrderRepository) CancelOrder(ctx context.Context, dto order.CancelDTO) error { //nolint:dupl
 	sql, args, err := or.db.Builder.Update(or.tableName).
 		Set("is_cancelled", true).
 		Where(sq.And{
@@ -107,23 +106,20 @@ func (or *OrderRepository) CancelOrder(ctx context.Context, dto order.CancelDTO)
 			sq.Eq{"amount": dto.Amount},
 			sq.Eq{"is_paid": false},
 		}).
-		Suffix("RETURNING account_id, amount").
 		ToSql()
 	if err != nil {
-		return 0, 0, fmt.Errorf("build cancel order query: %w", err)
+		return fmt.Errorf("build cancel order query: %w", err)
 	}
 
 	or.logger.Debug("cancel order query", zap.String("sql", sql), zap.Any("args", args))
 
-	var accountID int64
-	var amount int64
-	if err := or.db.QueryRow(ctx, sql, args...).Scan(&accountID, &amount); err != nil {
-		if errors.Is(err, pgx.ErrNoRows) {
-			return 0, 0, fmt.Errorf("cancel order: %w", order.ErrNotFound)
-		}
-
-		return 0, 0, fmt.Errorf("cancel order: %w", err)
+	result, err := or.db.Exec(ctx, sql, args...)
+	if err != nil {
+		return fmt.Errorf("cancel order: %w", err)
+	}
+	if result.RowsAffected() == 0 {
+		return fmt.Errorf("cancel order: %w", order.ErrNotFound)
 	}
 
-	return accountID, amount, nil
+	return nil
 }
