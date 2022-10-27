@@ -10,6 +10,8 @@ import (
 	"go.uber.org/zap"
 )
 
+//go:generate mockgen -source=service.go -destination=mock_test.go -package=report_test
+
 type Repository interface {
 	GetReportMap(ctx context.Context, dto GetMapDTO) (map[int64]int64, error)
 }
