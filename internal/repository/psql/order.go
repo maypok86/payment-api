@@ -76,6 +76,7 @@ func (or *OrderRepository) PayForOrder(ctx context.Context, dto order.PayForDTO)
 			sq.Eq{"account_id": dto.AccountID},
 			sq.Eq{"service_id": dto.ServiceID},
 			sq.Eq{"amount": dto.Amount},
+			sq.Eq{"is_paid": false},
 			sq.Eq{"is_cancelled": false},
 		}).
 		ToSql()
@@ -105,6 +106,7 @@ func (or *OrderRepository) CancelOrder(ctx context.Context, dto order.CancelDTO)
 			sq.Eq{"service_id": dto.ServiceID},
 			sq.Eq{"amount": dto.Amount},
 			sq.Eq{"is_paid": false},
+			sq.Eq{"is_cancelled": false},
 		}).
 		ToSql()
 	if err != nil {
