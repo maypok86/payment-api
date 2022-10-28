@@ -248,10 +248,10 @@ paths:
         description: ''
       tags:
         - report
-  /report/download:
-    post:
+  /report:
+    get:
       summary: download report
-      operationId: post-report-download
+      operationId: get-report-download
       tags:
         - report
       description: Download report
