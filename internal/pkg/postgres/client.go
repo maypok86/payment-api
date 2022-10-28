@@ -12,6 +12,7 @@ import (
 )
 
 const (
+	defaultMaxPoolSize  int           = 4
 	defaultConnAttempts int           = 10
 	defaultConnTimeout  time.Duration = time.Second
 )
@@ -30,6 +31,7 @@ func NewClient(ctx context.Context, config ConnectionConfig, opts ...Option) (*C
 	instance := &Client{
 		connAttempts: defaultConnAttempts,
 		connTimeout:  defaultConnTimeout,
+		maxPoolSize:  defaultMaxPoolSize,
 	}
 
 	for _, opt := range opts {

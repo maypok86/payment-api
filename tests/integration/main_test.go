@@ -1,6 +1,7 @@
 package integration
 
 import (
+	"context"
 	"log"
 	"net/http"
 	"os"
@@ -8,14 +9,50 @@ import (
 	"time"
 
 	. "github.com/Eun/go-hit"
+	"github.com/maypok86/payment-api/internal/pkg/postgres"
+	"github.com/stretchr/testify/suite"
 )
 
 const (
 	host       = "backend:8080"
 	healthPath = "http://" + host + "/health"
 	attempts   = 20
-	// basePath   = "http://" + host + "/api/v1".
+	basePath   = "http://" + host + "/api/v1"
 )
+
+type APISuite struct {
+	suite.Suite
+
+	db *postgres.Client
+}
+
+func (as *APISuite) SetupSuite() {
+	cfg := postgres.NewConnectionConfig(
+		os.Getenv("POSTGRES_HOST"),
+		os.Getenv("POSTGRES_PORT"),
+		os.Getenv("POSTGRES_USER"),
+		os.Getenv("POSTGRES_PASSWORD"),
+		os.Getenv("POSTGRES_DBNAME"),
+		os.Getenv("POSTGRES_SSLMODE"),
+	)
+	client, err := postgres.NewClient(context.Background(), cfg)
+	as.Require().NoError(err)
+
+	as.db = client
+}
+
+func (as *APISuite) TearDownTest() {
+	_, err := as.db.Pool.Exec(context.Background(), "TRUNCATE TABLE accounts, transactions, orders CASCADE")
+	as.Require().NoError(err)
+}
+
+func (as *APISuite) TearDownSuite() {
+	as.db.Close()
+}
+
+func TestAPISuite(t *testing.T) {
+	suite.Run(t, new(APISuite))
+}
 
 func TestMain(m *testing.M) {
 	if err := healthCheck(attempts); err != nil {
@@ -45,11 +82,4 @@ func healthCheck(attempts int) error {
 	}
 
 	return err
-}
-
-func TestOK(t *testing.T) {
-	Test(t,
-		Get(healthPath),
-		Expect().Status().Equal(http.StatusOK),
-	)
 }

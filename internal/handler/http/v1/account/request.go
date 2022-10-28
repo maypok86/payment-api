@@ -3,7 +3,7 @@ package account
 import "github.com/maypok86/payment-api/internal/domain/account"
 
 type AddBalanceRequest struct {
-	AccountID int64 `json:"account_id" binding:"required"`
+	AccountID int64 `json:"account_id" binding:"required,gte=1"`
 	Amount    int64 `json:"amount"     binding:"gte=0"`
 }
 
@@ -15,8 +15,8 @@ func (r AddBalanceRequest) ToDTO() account.AddBalanceDTO {
 }
 
 type TransferBalanceRequest struct {
-	SenderID   int64 `json:"sender_id"   binding:"required"`
-	ReceiverID int64 `json:"receiver_id" binding:"required"`
+	SenderID   int64 `json:"sender_id"   binding:"required,gte=1"`
+	ReceiverID int64 `json:"receiver_id" binding:"required,gte=1"`
 	Amount     int64 `json:"amount"      binding:"required,gt=0"`
 }
 

@@ -45,7 +45,7 @@ func (bh *BaseHandler) ParseIDFromPath(c *gin.Context, param string) (int64, err
 	}
 
 	id, err := strconv.ParseInt(idParam, 10, 64)
-	if err != nil {
+	if id <= 0 || err != nil {
 		return 0, ErrInvalidID
 	}
 
