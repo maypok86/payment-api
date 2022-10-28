@@ -7,7 +7,7 @@ services:
       context: ..
       dockerfile: build/backend/Dockerfile
     env_file:
-      - ../.env
+      - ../.env.test
     restart: unless-stopped
     ports:
       - ${HTTP_PORT}:${HTTP_PORT}

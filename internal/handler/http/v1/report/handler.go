@@ -70,7 +70,7 @@ func (h *Handler) GetReportLink(c *gin.Context) {
 		return
 	}
 
-	link := fmt.Sprintf("http://%s:%s/api/v1/report?key=%s", h.cfg.ReportHost, h.cfg.ReportPort, key)
+	link := fmt.Sprintf("http://%s:%s/api/v1/report/?key=%s", h.cfg.ReportHost, h.cfg.ReportPort, key)
 
 	c.JSON(http.StatusOK, GetReportLinkResponse{
 		Link: link,

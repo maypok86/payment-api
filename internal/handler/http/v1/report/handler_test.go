@@ -63,7 +63,7 @@ func TestHandler_GetReportLink(t *testing.T) {
 	}
 	fakeKey := fmt.Sprintf("%d-%d", fakeRequest.Year, fakeRequest.Month)
 	fakeCfg := newFakeConfig()
-	fakeReportLink := fmt.Sprintf("http://%s:%s/api/v1/report?key=%s", fakeCfg.ReportHost, fakeCfg.ReportPort, fakeKey)
+	fakeReportLink := fmt.Sprintf("http://%s:%s/api/v1/report/?key=%s", fakeCfg.ReportHost, fakeCfg.ReportPort, fakeKey)
 	reportServiceErr := errors.New("report service error")
 
 	setupGin := func(c *gin.Context, content interface{}) {

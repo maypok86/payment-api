@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/csv"
 	"fmt"
+	"sort"
 	"time"
 
 	"go.uber.org/zap"
@@ -40,11 +41,19 @@ func reportMapToCSV(reportMap map[int64]int64) ([]byte, error) {
 	var buffer bytes.Buffer
 	writer := csv.NewWriter(&buffer)
 
+	ids := make([]int64, 0, len(reportMap))
+	for id := range reportMap {
+		ids = append(ids, id)
+	}
+	sort.Slice(ids, func(i, j int) bool {
+		return ids[i] < ids[j]
+	})
+
 	if err := writer.Write([]string{"service_id", "amount"}); err != nil {
 		return nil, fmt.Errorf("report map to csv: %w", err)
 	}
-	for serviceID, amount := range reportMap {
-		if err := writer.Write([]string{fmt.Sprintf("%d", serviceID), fmt.Sprintf("%d", amount)}); err != nil {
+	for _, serviceID := range ids {
+		if err := writer.Write([]string{fmt.Sprintf("%d", serviceID), fmt.Sprintf("%d", reportMap[serviceID])}); err != nil {
 			return nil, fmt.Errorf("report map to csv: %w", err)
 		}
 	}
