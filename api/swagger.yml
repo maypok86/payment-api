@@ -1,0 +1,577 @@
+openapi: 3.0.0
+info:
+  title: payment-api
+  version: '1.0'
+  contact:
+    name: Alexey Mayshev
+    email: alex.mayshev.86@gmail.com
+  license:
+    name: Apache 2.0
+  description: API for payment
+servers:
+  - url: 'http://localhost:8080/api/v1'
+    description: local
+paths:
+  '/balance/{account_id}':
+    parameters:
+      - $ref: '#/components/parameters/AccountID'
+    get:
+      summary: get balance by account id
+      tags:
+        - balance
+      operationId: get-balance-account_id
+      description: Get balance by account id
+      responses:
+        '200':
+          description: Success get balance by account id
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+  /balance:
+    post:
+      summary: add balance
+      operationId: post-balance
+      responses:
+        '200':
+          description: Success add balance to account
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: Add balance to account by id
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                account_id:
+                  $ref: '#/components/schemas/AccountID'
+                amount:
+                  $ref: '#/components/schemas/Amount'
+              required:
+                - account_id
+                - amount
+        description: ''
+      tags:
+        - balance
+  /balance/transfer:
+    post:
+      summary: transfer balance
+      operationId: post-balance-transfer
+      responses:
+        '200':
+          description: Success transfer balance
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  sender_balance:
+                    $ref: '#/components/schemas/Amount'
+                  receiver_balance:
+                    $ref: '#/components/schemas/Amount'
+                required:
+                  - sender_balance
+                  - receiver_balance
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - balance
+      description: Transfer balance between sender and receiver
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                sender_id:
+                  $ref: '#/components/schemas/AccountID'
+                receiver_id:
+                  $ref: '#/components/schemas/AccountID'
+                amount:
+                  $ref: '#/components/schemas/Amount'
+              required:
+                - sender_id
+                - receiver_id
+                - amount
+        description: ''
+  /order/create:
+    post:
+      summary: create order
+      operationId: post-order-create
+      responses:
+        '200':
+          description: Success create order
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  order:
+                    $ref: '#/components/schemas/Order'
+                  balance:
+                    $ref: '#/components/schemas/Balance'
+                required:
+                  - order
+                  - balance
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '409':
+          $ref: '#/components/responses/ConflictError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: Create order
+      tags:
+        - order
+      requestBody:
+        $ref: '#/components/requestBodies/OrderRequest'
+  /order/pay:
+    post:
+      summary: pay for order
+      operationId: post-order-pay
+      responses:
+        '200':
+          description: Success pay for order
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: Pay for order
+      requestBody:
+        $ref: '#/components/requestBodies/OrderRequest'
+      tags:
+        - order
+  /order/cancel:
+    post:
+      summary: Cancel order
+      operationId: post-order-cancel
+      responses:
+        '200':
+          description: Success cancel order
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Balance'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      tags:
+        - order
+      description: Cancel order
+      requestBody:
+        $ref: '#/components/requestBodies/OrderRequest'
+  '/transaction/{sender_id}':
+    get:
+      summary: get transactions by sender id
+      tags:
+        - transaction
+      responses:
+        '200':
+          description: Success get transactions by sender id
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  transacions:
+                    $ref: '#/components/schemas/TransactionList'
+                  range:
+                    $ref: '#/components/schemas/ListRange'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      operationId: get-transaction
+      description: Get transactions by sender id
+      parameters:
+        - $ref: '#/components/parameters/Limit'
+        - $ref: '#/components/parameters/Offset'
+        - $ref: '#/components/parameters/Sort'
+        - $ref: '#/components/parameters/Direction'
+    parameters:
+      - $ref: '#/components/parameters/SenderID'
+  /report/link:
+    post:
+      summary: get report link
+      operationId: post-report-link
+      responses:
+        '200':
+          description: Success get report link
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  link:
+                    type: string
+                    format: uri
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+      description: Get report link
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                month:
+                  $ref: '#/components/schemas/Month'
+                year:
+                  $ref: '#/components/schemas/Year'
+        description: ''
+      tags:
+        - report
+  /report/download:
+    post:
+      summary: download report
+      operationId: post-report-download
+      tags:
+        - report
+      description: Download report
+      parameters:
+        - schema:
+            type: string
+            example: 2022-09
+          in: query
+          required: true
+          name: key
+          description: report key
+      responses:
+        '200':
+          $ref: '#/components/responses/DownloadReportResponse'
+        '400':
+          $ref: '#/components/responses/BadRequestError'
+        '404':
+          $ref: '#/components/responses/NotFoundError'
+        '500':
+          $ref: '#/components/responses/InternalServerError'
+components:
+  schemas:
+    Error:
+      title: Error
+      type: object
+      description: Error type which is returned on a failed request
+      properties:
+        message:
+          type: string
+      required:
+        - message
+    Balance:
+      title: Balance
+      type: object
+      description: Account balance
+      properties:
+        balance:
+          $ref: '#/components/schemas/Amount'
+      required:
+        - balance
+    AccountID:
+      type: integer
+      description: Account id
+      title: AccountID
+      format: int64
+      minimum: 1
+      example: 1
+    Amount:
+      type: integer
+      title: Amount
+      minimum: 0
+      example: 100
+      format: int64
+      description: Balance amount
+    OrderID:
+      type: integer
+      title: OrderID
+      description: Order id
+      format: int64
+      example: 1
+      minimum: 1
+    ServiceID:
+      type: integer
+      title: ServiceID
+      description: Service id
+      format: int64
+      minimum: 1
+      example: 1
+    Order:
+      title: Order
+      type: object
+      description: Order
+      properties:
+        order_id:
+          $ref: '#/components/schemas/OrderID'
+        account_id:
+          $ref: '#/components/schemas/AccountID'
+        service_id:
+          $ref: '#/components/schemas/ServiceID'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        is_paid:
+          type: boolean
+        is_cancelled:
+          type: boolean
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+      required:
+        - order_id
+        - account_id
+        - service_id
+        - amount
+        - is_paid
+        - is_cancelled
+        - created_at
+        - updated_at
+    TransactionType:
+      type: string
+      title: TransactionType
+      enum:
+        - enrollment
+        - transfer
+        - reservation
+        - cancel_reservation
+      description: Transaction type
+    Transaction:
+      title: Transaction
+      type: object
+      description: Transaction
+      properties:
+        transaction_id:
+          $ref: '#/components/schemas/TransactionID'
+        type:
+          $ref: '#/components/schemas/TransactionType'
+        sender_id:
+          $ref: '#/components/schemas/AccountID'
+        receiver_id:
+          $ref: '#/components/schemas/AccountID'
+        amount:
+          $ref: '#/components/schemas/Amount'
+        description:
+          type: string
+          example: Awesome description
+        created_at:
+          type: string
+          format: date-time
+      required:
+        - transaction_id
+        - type
+        - sender_id
+        - receiver_id
+        - amount
+        - description
+        - created_at
+    TransactionID:
+      type: integer
+      title: TransactionID
+      format: int64
+      minimum: 1
+      example: 1
+      description: Transaction id
+    TransactionList:
+      title: TransactionList
+      type: array
+      items:
+        $ref: '#/components/schemas/Transaction'
+      description: Transaction list
+    ListRange:
+      title: ListRange
+      type: object
+      description: List range
+      properties:
+        limit:
+          type: integer
+          format: int64
+          example: 10
+          maximum: 100
+          minimum: 0
+          default: 10
+        offset:
+          type: integer
+          format: int64
+          default: 0
+          example: 0
+          minimum: 0
+        count:
+          type: integer
+          format: int64
+          minimum: 0
+          example: 1000
+    Month:
+      type: integer
+      title: Month
+      format: int64
+      minimum: 1
+      maximum: 12
+      example: 1
+      description: Month number
+    Year:
+      type: integer
+      title: Year
+      minimum: 2022
+      example: 2022
+      format: int64
+      description: Year number
+  responses:
+    InternalServerError:
+      description: Internal Server Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                message: Internal Server Error
+    NotFoundError:
+      description: Not Found Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                message: Not found
+    BadRequestError:
+      description: Bad Request Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                message: Bad Request
+    ConflictError:
+      description: Conflict Error
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+          examples:
+            example:
+              value:
+                message: Conflict error
+    DownloadReportResponse:
+      description: Download report response
+      content:
+        application/csv:
+          schema:
+            type: string
+      headers:
+        Content-Disposition:
+          schema:
+            type: string
+          description: attachment; filename=report_{key}.csv
+  requestBodies:
+    OrderRequest:
+      content:
+        application/json:
+          schema:
+            type: object
+            properties:
+              order_id:
+                $ref: '#/components/schemas/OrderID'
+              account_id:
+                $ref: '#/components/schemas/AccountID'
+              service_id:
+                $ref: '#/components/schemas/ServiceID'
+              amount:
+                $ref: '#/components/schemas/Amount'
+            required:
+              - order_id
+              - account_id
+              - service_id
+              - amount
+      description: Order request
+  parameters:
+    AccountID:
+      name: account_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 1
+        minimum: 1
+      description: Account ID
+    Limit:
+      name: Limit
+      in: query
+      schema:
+        type: integer
+        format: int64
+        example: 10
+        minimum: 0
+        default: 10
+        maximum: 100
+      description: Pagination limit
+    Offset:
+      name: Offset
+      in: query
+      schema:
+        type: integer
+        format: int64
+        minimum: 0
+        default: 0
+        example: 0
+      description: Pagination offset
+    Sort:
+      name: Sort
+      in: query
+      schema:
+        type: string
+        enum:
+          - date
+          - sum
+      description: Sort type
+    Direction:
+      name: Direction
+      in: query
+      required: false
+      schema:
+        type: string
+        enum:
+          - asc
+          - desc
+      description: Sort direction
+    SenderID:
+      name: sender_id
+      in: path
+      required: true
+      schema:
+        type: integer
+        format: int64
+        example: 1
+        minimum: 1
+      description: Sender ID
