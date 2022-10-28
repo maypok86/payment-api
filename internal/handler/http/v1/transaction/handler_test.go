@@ -93,11 +93,11 @@ func newListResponse(
 	return fakeResponse
 }
 
-func TestHandler_GetTransactionBySenderID(t *testing.T) {
+func TestHandler_GetTransactionByAccountID(t *testing.T) {
 	ctx := context.Background()
 
-	fakeSenderID := int64(1)
-	fakeParam := fmt.Sprintf("%d", fakeSenderID)
+	fakeAccountID := int64(1)
+	fakeParam := fmt.Sprintf("%d", fakeAccountID)
 	fakePaginationParams := pagination.Params{
 		Limit:  1,
 		Offset: 0,
@@ -114,14 +114,14 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 		fakePaginationParams,
 	)
 	require.NoError(t, err)
-	fakeTransactions := newTransactions(t, fakeSenderID, 10)
+	fakeTransactions := newTransactions(t, fakeAccountID, 10)
 
 	transactionServiceErr := errors.New("transaction service error")
 
 	setupGin := func(c *gin.Context, param string, queryParams map[string]string) {
 		c.Request.Method = http.MethodGet
 		c.Request.Header.Set("Content-Type", "application/json")
-		c.Params = gin.Params{{Key: "sender_id", Value: param}}
+		c.Params = gin.Params{{Key: "account_id", Value: param}}
 
 		query := url.Values{}
 		for k, v := range queryParams {
@@ -146,7 +146,7 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 		statusCode          int
 	}{
 		{
-			name: "invalid sender_id param",
+			name: "invalid account_id param",
 			mock: func(service *MockService) {
 			},
 			args: args{
@@ -207,7 +207,7 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 			name: "transaction service error",
 			mock: func(service *MockService) {
 				service.EXPECT().
-					GetTransactionsBySenderID(ctx, fakeSenderID, fakeListParams).
+					GetTransactionsByAccountID(ctx, fakeAccountID, fakeListParams).
 					Return(nil, 0, transactionServiceErr)
 			},
 			args: args{
@@ -215,15 +215,15 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 				queryParams: fakeQueryParams,
 			},
 			wantedErrorResponse: &handler.ErrorResponse{
-				Message: "Get transactions by sender id error",
+				Message: "Get transactions by account id error",
 			},
 			statusCode: http.StatusInternalServerError,
 		},
 		{
-			name: "success get transactions by sender id",
+			name: "success get transactions by account id",
 			mock: func(service *MockService) {
 				service.EXPECT().
-					GetTransactionsBySenderID(ctx, fakeSenderID, fakeListParams).
+					GetTransactionsByAccountID(ctx, fakeAccountID, fakeListParams).
 					Return(fakeTransactions, len(fakeTransactions), nil)
 			},
 			args: args{
@@ -243,7 +243,7 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 			setupGin(c, tt.args.param, tt.args.queryParams)
 			tt.mock(transactionService)
 
-			transactionHandler.GetTransactionsBySenderID(c)
+			transactionHandler.GetTransactionsByAccountID(c)
 
 			require.Equal(t, tt.statusCode, w.Code)
 			if tt.wantedErrorResponse != nil {

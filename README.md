@@ -210,7 +210,7 @@ curl --request POST \
 Пример запроса:
 ```bash
 curl --request GET \
-  --url http://localhost:8080/api/v1/transaction/{sender_id} \
+  --url http://localhost:8080/api/v1/transaction/{account_id} \
   --header 'Content-Type: application/json'
 ```
 

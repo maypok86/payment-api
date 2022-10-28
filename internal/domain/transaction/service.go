@@ -10,7 +10,7 @@ import (
 //go:generate mockgen -source=service.go -destination=mock_test.go -package=transaction_test
 
 type Repository interface {
-	GetTransactionsBySenderID(ctx context.Context, senderID int64, listParams ListParams) ([]Transaction, int, error)
+	GetTransactionsByAccountID(ctx context.Context, senderID int64, listParams ListParams) ([]Transaction, int, error)
 }
 
 type Service struct {
@@ -25,14 +25,14 @@ func NewService(repository Repository, logger *zap.Logger) *Service {
 	}
 }
 
-func (s *Service) GetTransactionsBySenderID(
+func (s *Service) GetTransactionsByAccountID(
 	ctx context.Context,
-	senderID int64,
+	accountID int64,
 	listParams ListParams,
 ) ([]Transaction, int, error) {
-	transactions, count, err := s.repository.GetTransactionsBySenderID(ctx, senderID, listParams)
+	transactions, count, err := s.repository.GetTransactionsByAccountID(ctx, accountID, listParams)
 	if err != nil {
-		return nil, 0, fmt.Errorf("get transactions by sender id: %w", err)
+		return nil, 0, fmt.Errorf("get transactions by sender accountID: %w", err)
 	}
 
 	return transactions, count, nil

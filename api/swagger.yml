@@ -183,14 +183,14 @@ paths:
       description: Cancel order
       requestBody:
         $ref: '#/components/requestBodies/OrderRequest'
-  '/transaction/{sender_id}':
+  '/transaction/{account_id}':
     get:
-      summary: get transactions by sender id
+      summary: get transactions by account id
       tags:
         - transaction
       responses:
         '200':
-          description: Success get transactions by sender id
+          description: Success get transactions by account id
           content:
             application/json:
               schema:
@@ -205,14 +205,14 @@ paths:
         '500':
           $ref: '#/components/responses/InternalServerError'
       operationId: get-transaction
-      description: Get transactions by sender id
+      description: Get transactions by account id
       parameters:
         - $ref: '#/components/parameters/Limit'
         - $ref: '#/components/parameters/Offset'
         - $ref: '#/components/parameters/Sort'
         - $ref: '#/components/parameters/Direction'
     parameters:
-      - $ref: '#/components/parameters/SenderID'
+      - $ref: '#/components/parameters/AccountID'
   /report/link:
     post:
       summary: get report link
@@ -565,13 +565,3 @@ components:
           - asc
           - desc
       description: Sort direction
-    SenderID:
-      name: sender_id
-      in: path
-      required: true
-      schema:
-        type: integer
-        format: int64
-        example: 1
-        minimum: 1
-      description: Sender ID

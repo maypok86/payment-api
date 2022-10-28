@@ -84,10 +84,10 @@ func TestService_GetTransactionsBySenderID(t *testing.T) {
 		wantErr bool
 	}{
 		{
-			name: "success get transactions by sender id",
+			name: "success get transactions by account id",
 			mock: func(repository *MockRepository) {
 				repository.EXPECT().
-					GetTransactionsBySenderID(ctx, fakeSenderID, listParams).
+					GetTransactionsByAccountID(ctx, fakeSenderID, listParams).
 					Return(transactionList, fakeCount, nil)
 			},
 			want: want{
@@ -100,7 +100,7 @@ func TestService_GetTransactionsBySenderID(t *testing.T) {
 			name: "repository error",
 			mock: func(repository *MockRepository) {
 				repository.EXPECT().
-					GetTransactionsBySenderID(ctx, fakeSenderID, listParams).
+					GetTransactionsByAccountID(ctx, fakeSenderID, listParams).
 					Return(nil, 0, errors.New("repository error"))
 			},
 			want:    want{},
@@ -118,7 +118,7 @@ func TestService_GetTransactionsBySenderID(t *testing.T) {
 
 			tt.mock(repository)
 
-			gotTransactionList, gotCount, err := service.GetTransactionsBySenderID(ctx, fakeSenderID, listParams)
+			gotTransactionList, gotCount, err := service.GetTransactionsByAccountID(ctx, fakeSenderID, listParams)
 			require.True(t, (err != nil) == tt.wantErr)
 			require.True(t, reflect.DeepEqual(tt.want.transactions, gotTransactionList))
 			require.Equal(t, tt.want.count, gotCount)

@@ -61,9 +61,9 @@ func (tr *TransactionRepository) CreateTransaction(ctx context.Context, dto tran
 	return nil
 }
 
-func (tr *TransactionRepository) GetTransactionsBySenderID(
+func (tr *TransactionRepository) GetTransactionsByAccountID(
 	ctx context.Context,
-	senderID int64,
+	accountID int64,
 	listParams transaction.ListParams,
 ) ([]transaction.Transaction, int, error) {
 	query := tr.db.Builder.Select(
@@ -75,7 +75,10 @@ func (tr *TransactionRepository) GetTransactionsBySenderID(
 		"description",
 		"created_at", "COUNT(*) OVER () AS total").
 		From(tr.tableName).
-		Where(sq.Eq{"sender_id": senderID})
+		Where(sq.Or{
+			sq.Eq{"sender_id": accountID},
+			sq.Eq{"receiver_id": accountID},
+		})
 
 	if listParams.Sort != nil {
 		query = listParams.Sort.UseSelectBuilder(query)
@@ -83,14 +86,14 @@ func (tr *TransactionRepository) GetTransactionsBySenderID(
 
 	sql, args, err := query.Limit(listParams.Pagination.Limit).Offset(listParams.Pagination.Offset).ToSql()
 	if err != nil {
-		return nil, 0, fmt.Errorf("build get transactions by sender id query: %w", err)
+		return nil, 0, fmt.Errorf("build get transactions by account id query: %w", err)
 	}
 
-	tr.logger.Debug("get transactions by sender id query", zap.String("sql", sql), zap.Any("args", args))
+	tr.logger.Debug("get transactions by account id query", zap.String("sql", sql), zap.Any("args", args))
 
 	rows, err := tr.db.Query(ctx, sql, args...)
 	if err != nil {
-		return nil, 0, fmt.Errorf("run get transactions by sender id query: %w", err)
+		return nil, 0, fmt.Errorf("run get transactions by account id query: %w", err)
 	}
 	defer rows.Close()
 
