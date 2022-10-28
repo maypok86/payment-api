@@ -17,5 +17,4 @@
 /.idea/
 *coverage.txt
 **/bin/
-.env
 docs/task.md
