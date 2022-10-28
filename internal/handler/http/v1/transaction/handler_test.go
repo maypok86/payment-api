@@ -253,8 +253,6 @@ func TestHandler_GetTransactionBySenderID(t *testing.T) {
 			} else {
 				var response transaction.ListResponse
 				require.NoError(t, json.NewDecoder(w.Body).Decode(&response))
-				fmt.Println(response)
-				fmt.Println(tt.response)
 				require.True(t, reflect.DeepEqual(tt.response, response))
 			}
 		})

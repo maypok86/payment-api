@@ -1,6 +1,8 @@
 package http
 
 import (
+	"net/http"
+
 	"github.com/gin-gonic/gin"
 	"github.com/maypok86/payment-api/internal/config"
 	"github.com/maypok86/payment-api/internal/domain"
@@ -18,6 +20,10 @@ func NewRouter(services *domain.Services, logger *zap.Logger) *gin.Engine {
 	} else {
 		gin.SetMode(gin.DebugMode)
 	}
+
+	router.GET("/health", func(c *gin.Context) {
+		c.Status(http.StatusOK)
+	})
 
 	api := router.Group("/api")
 	{

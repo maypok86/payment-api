@@ -40,17 +40,24 @@ fmt: ## Run format tools on all go files
 lint: ## Run all the linters
 	golangci-lint run -v --color=always --timeout 4m ./...
 
+.PHONY: test
+test: test.unit test.integration ## Run all the tests
+
 .PHONY: test.unit
 test.unit: ## Run all unit tests
 	@echo 'mode: atomic' > coverage.txt
-	go test -covermode=atomic -coverprofile=coverage.txt -v -race ./...
+	go test -covermode=atomic -coverprofile=coverage.txt -v -race ./internal/...
+
+.PHONY: test.integration
+test.integration: ## Run all integration tests
+	bash scripts/test-integration.sh $(PROJECT)
 
 .PHONY: cover
 cover: test.unit ## Run all the tests and opens the coverage report
 	go tool cover -html=coverage.txt
 
 .PHONY: ci
-ci: lint test.unit ## Run all the tests and code checks
+ci: lint test ## Run all the tests and code checks
 
 .PHONY: generate
 generate: ## Generate files for the project
