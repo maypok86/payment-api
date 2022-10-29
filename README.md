@@ -5,8 +5,6 @@
 ![Go Report](https://goreportcard.com/badge/github.com/maypok86/payment-api)
 ![License](https://img.shields.io/github/license/maypok86/payment-api)
 
-# Решение
-
 ## Запуск
 
 Чтобы запустить приложение, необходимо выполнить следующую команду в корне репозитория:
