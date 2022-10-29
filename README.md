@@ -82,7 +82,7 @@ curl --request GET \
 Пример запроса:
 ```bash
 curl --request POST \
-  --url http://localhost:8080/api/v1/balance/ \
+  --url http://localhost:8080/api/v1/balance/add \
   --header 'Content-Type: application/json' \
   --data '{
   "account_id": 1,
@@ -266,7 +266,7 @@ curl --request POST \
 Пример ответа:
 ```json
 {
-  "link": "http://localhost:8080/api/v1/report/?key=2022-10"
+  "link": "http://localhost:8080/api/v1/report/download?key=2022-10"
 }
 ```
 
@@ -277,7 +277,7 @@ query parameter key - это строка, в которой закодиров�
 Пример запроса:
 ```bash
 curl --request GET \
-  --url http://localhost:8080/api/v1/report/?key=2022-10
+  --url http://localhost:8080/api/v1/report/download?key=2022-10
 ```
 
 Пример ответа:

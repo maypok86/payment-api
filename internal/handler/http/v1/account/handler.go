@@ -37,7 +37,7 @@ func (h *Handler) InitAPI(router *gin.RouterGroup) {
 	balanceGroup := router.Group("/balance")
 	{
 		balanceGroup.GET("/:account_id", h.GetBalance)
-		balanceGroup.POST("/", h.AddBalance)
+		balanceGroup.POST("/add", h.AddBalance)
 		balanceGroup.POST("/transfer", h.TransferBalance)
 	}
 }

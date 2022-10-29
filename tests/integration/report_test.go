@@ -115,7 +115,7 @@ func (as *APISuite) TestGetReportLink() {
 		}),
 		Expect().Status().Equal(http.StatusOK),
 		Expect().Body().JSON().Equal(map[string]interface{}{
-			"link": basePath + fmt.Sprintf("/report/?key=%d-%d", year, month),
+			"link": basePath + fmt.Sprintf("/report/download?key=%d-%d", year, month),
 		}),
 	)
 
@@ -183,7 +183,7 @@ func (as *APISuite) TestGetReportLink() {
 func (as *APISuite) TestDownloadReport() {
 	year, month, _ := time.Now().Date()
 	key := fmt.Sprintf("%d-%d", year, month)
-	link := basePath + fmt.Sprintf("/report/?key=%s", key)
+	link := basePath + fmt.Sprintf("/report/download?key=%s", key)
 	reportFilename := fmt.Sprintf("report_%s.csv", key)
 	Test(as.T(),
 		Get(link),
@@ -194,7 +194,7 @@ func (as *APISuite) TestDownloadReport() {
 	)
 
 	Test(as.T(),
-		Get(basePath+"/report/"),
+		Get(basePath+"/report/download"),
 		Expect().Status().Equal(http.StatusBadRequest),
 		Expect().Body().JSON().Equal(map[string]interface{}{
 			"message": "Download report error. Invalid request",

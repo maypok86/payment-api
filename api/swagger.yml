@@ -34,7 +34,7 @@ paths:
           $ref: '#/components/responses/NotFoundError'
         '500':
           $ref: '#/components/responses/InternalServerError'
-  /balance:
+  /balance/add:
     post:
       summary: add balance
       operationId: post-balance
@@ -248,7 +248,7 @@ paths:
         description: ''
       tags:
         - report
-  /report:
+  /report/download:
     get:
       summary: download report
       operationId: get-report-download

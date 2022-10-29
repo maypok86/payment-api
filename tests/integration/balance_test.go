@@ -7,7 +7,7 @@ import (
 )
 
 const (
-	addBalancePath      = basePath + "/balance/"
+	addBalancePath      = basePath + "/balance/add"
 	getBalancePath      = basePath + "/balance/"
 	transferBalancePath = basePath + "/balance/transfer"
 )
