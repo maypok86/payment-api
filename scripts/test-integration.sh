@@ -17,6 +17,3 @@ GOOSE_VERSION=3.6.0 docker-compose \
   -f deployments/docker-compose.test.yml -p "$project" --env-file .env.test down
 
 exit $test_status_code
-
-GOOSE_VERSION=3.6.0 docker-compose \
-  -f deployments/docker-compose.test.yml -p "$project" --env-file .env.test up --build --exit-code-from integration
