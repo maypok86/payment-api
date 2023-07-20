@@ -8,7 +8,7 @@ require (
 	github.com/bxcodec/faker/v3 v3.8.0
 	github.com/gin-gonic/gin v1.8.1
 	github.com/golang/mock v1.6.0
-	github.com/jackc/pgconn v1.14.0
+	github.com/jackc/pgconn v1.14.1
 	github.com/jackc/pgerrcode v0.0.0-20220416144525-469b46aa5efa
 	github.com/jackc/pgx/v4 v4.18.1
 	github.com/kelseyhightower/envconfig v1.4.0
